@@ -66,12 +66,12 @@ public class ParseUtils {
                 i += 8; // skip "<![CDATA["
                 beginIndex4Segment = i + 1;
                 inCDATABlock = true;
-            } else if (inCDATABlock && bytes[i] == ']' && bytes[i + 1] == ']') { // found "]]"
+            } else if (inCDATABlock && bytes[i] == ']' && bytes[i + 1] == ']' && bytes[i + 2] == '>') { // found "]]>"
                 length4Segment = i - beginIndex4Segment;
                 if (length4Segment > 0) {
                     sb.append(internalParseString(bytes, beginIndex4Segment, length4Segment, charset));
                 }
-                i += 1; // skip "]]"
+                i += 2; // skip "]]"
                 beginIndex4Segment = i + 1;
             } else if (i + 1 >= lastIndex) { // last byte
                 length4Segment = i + 1 - beginIndex4Segment;
