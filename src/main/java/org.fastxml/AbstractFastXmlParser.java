@@ -73,7 +73,11 @@ public abstract class AbstractFastXmlParser implements FastXmlParser {
     protected Charset charset;
     protected final static Charset DEFAULT_CHARSET = Charset.defaultCharset();
 
-    public int current() {
+    public int getCurrentEvent() {
         return this.currentEvent;
+    }
+
+    public int getNextEvent() {
+        return this.nextEvent;
     }
 }

@@ -39,10 +39,10 @@ public interface FastXmlParser {
 
     /**
      * get current event that has already checked
-     * @return
+     * @return event type
      * @throws ParseException
      */
-    int current();
+    int getCurrentEvent();
 
     /**
      * read bytes, move the cursor, and check it's event type
@@ -50,6 +50,14 @@ public interface FastXmlParser {
      * @return event type: START_DOCUMENT,END_DOCUMENT,START_TAG,END_TAG,ATTRIBUTE,TEXT
      */
     int next() throws ParseException;
+
+    /**
+     * get next event before next() method called. You can call this method without worry it
+     * This method will directly return the next event which has parsed in perv next(),
+     * and will not parse bytes
+     * @return event type
+     */
+    int getNextEvent();
 
     /**
      * skip the current tag and its descendants by moving cursor.

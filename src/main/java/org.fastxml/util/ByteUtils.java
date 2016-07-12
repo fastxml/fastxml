@@ -21,7 +21,7 @@ package org.fastxml.util;
 public class ByteUtils {
 
     /**
-     * validate the byte to check that is a char of tag name or attribute name.
+     * check whether the byte is a char of tag name or attribute name.
      *
      * @param b a byte to be valid
      * @return true if valid, otherwise false
@@ -32,7 +32,7 @@ public class ByteUtils {
     }
 
     /**
-     * contrary to isValidTokenChar method
+     * check whether the byte is not a char of tag name and attribute name.
      *
      * @param b a byte to be valid
      * @return false if valid, otherwise true
