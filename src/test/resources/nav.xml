@@ -1,0 +1,135 @@
+<?xml version='1.0' encoding="us-ascii"?><!--random structure of XML to test name space--><top xmlns:level1 ='top' xmlns:level2 = 'top' xmlns:level3='top' xmlns:level4 = 'top' attr='3'>
+<level1:level1 xmlns:level1='level1' attr='4'>
+<level2:level2 xmlns:level2='level2' attr='9'>
+<level3:level3 xmlns:level3='level3' attr='3'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='8'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='9'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='3'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='1'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='1'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='3'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='9'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='0'>
+</level3:level3>
+</level2:level2>
+<level2:level2 xmlns:level2='level2' attr='1'>
+<level3:level3 xmlns:level3='level3' attr='6'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+</level2:level2>
+<level2:level2 xmlns:level2='level2' attr='7'>
+<level3:level3 xmlns:level3='level3' attr='5'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='1'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='6'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='5'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='0'>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='4'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='1'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+</level2:level2>
+<level2:level2 xmlns:level2='level2' attr='0'>
+</level2:level2>
+</level1:level1>
+<level1:level1 xmlns:level1='level1' attr='0'>
+</level1:level1>
+<level1:level1 xmlns:level1='level1' attr='1'>
+<level2:level2 xmlns:level2='level2' attr='4'>
+<level3:level3 xmlns:level3='level3' attr='5'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='0'>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='4'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+<level3:level3 xmlns:level3='level3' attr='1'>
+<level4:level4 xmlns:level4='level4' attr ='0'></level4:level4>
+</level3:level3>
+</level2:level2>
+</level1:level1>
+</top>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE bix SYSTEM "rez/bix.dtd">
+<!-- PUBLIC "http://iubio.bio.indiana.edu/grid/runner/docs//bix.dtd" -->
+<!-- FIXME for bix dialog parser - any "choice" field should install runSwitch
+	 from parlist options.  Now have to put each parlist.par runswitch into
+	 action line -->
+<bix>
+    <package>
+        <id>samplepack</id>
+    </package>
+    <package name ="name0"/>
+    <package name ="name1" />
+    <package name ="name1"/>
+    <package name= "name2" value = "222"><id /></package>
+    <package name="name3" value="333.33"><id></id></package>
+    <package name="姓名" value="牛叉叉"><id>不知道id是多少</id></package>
+<!-- this is comment1 -->
+    <package name="姓名111" value="非也"><id>不知<![CDATA[
+    here has some 中文!
+    ]]>]道id是::<![CDATA[aaaqwe啊等。。]]>多少</id></package>
+    <package name="姓名222" value="牛轰轰"><id><![CDATA[花落知多少]]></id></package>
+
+    <s:Envelope
+            xmlns:s='urn:schemas-xmlsoap-org:soap.v1'
+            xmlns:xsi='http://www.w3.org/1999/XMLSchema/instance'
+    >
+    <s:Body>
+    <ns2:ListEntry xmlns:ns2='urn:develop-com:javaclass:roxtest'>
+        <llong>3</llong>
+        <sstring>Hello </sstring>
+        <next s:href='#sid1' />
+    </ns2:ListEntry>
+    <ns2:ListEntry xmlns:ns2='urn:develop-com:javaclass:roxtest' s:id='sid1'>
+        <llong>3</llong>
+
+        <sstring>Hello </sstring>
+        <next s:href='#sid2' />
+    </ns2:ListEntry>
+    </s:Body>
+    </s:Envelope>
+</bix><!-- this is comment2 -->
