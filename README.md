@@ -14,6 +14,7 @@
 *(Beta version now, welcome to merge request or submit issues)*
 
 # Why FastXml
+
  * Very good performance, nearly twice as fast as VTD-XMl and 30% faster than XPP3/MXP1
  * Hardly consumes memory, save more memory than VTD-XML and XPP3/MXP1
  * No dependencies
@@ -21,6 +22,7 @@
  * The api of FastXml is very simple and easy to use
 
 # Benchmark
+
 [https://github.com/fastxml/fastxml-benchmark](https://github.com/fastxml/fastxml-benchmark)
 
 # How could FastXml be so fast
@@ -39,3 +41,4 @@ FastXml source code is licensed under the Apache Licence, Version 2.0 (http://ww
 
 # TODO
  * Support big file
+ * To be more faster
