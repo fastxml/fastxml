@@ -18,8 +18,9 @@ package org.fastxml.exception;
 /**
  * Created by weager on 2016/06/10.
  */
-public class NumberFormatException extends Exception {
+public class NumberFormatException extends ParseException {
     private String rawString;
+
 
     public NumberFormatException(String message, String rawString) {
         super(message);
@@ -30,8 +31,12 @@ public class NumberFormatException extends Exception {
         return rawString;
     }
 
+    public void setRawString(String rawString) {
+        this.rawString = rawString;
+    }
+
     public static NumberFormatException formatException(String rawString, String type) {
-        String message = String.format("could not parse string[%s] to %s", rawString, type);
+        String message = String.format("could not parse bytes[%s] to %s", rawString, type);
         return new NumberFormatException(message, rawString);
     }
 
@@ -54,4 +59,5 @@ public class NumberFormatException extends Exception {
     public static NumberFormatException doubleFormatException(String rawString) {
         return formatException(rawString, "double");
     }
+
 }

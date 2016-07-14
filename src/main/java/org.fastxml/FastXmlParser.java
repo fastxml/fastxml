@@ -17,8 +17,8 @@ package org.fastxml;
 
 import java.nio.charset.Charset;
 
-import org.fastxml.exception.NumberFormatException;
 import org.fastxml.exception.ParseException;
+import org.fastxml.exception.NumberFormatException;
 
 /**
  * The interface of FastXml。
@@ -157,7 +157,7 @@ public interface FastXmlParser {
      *
      * @return readable string or zero if no bytes
      */
-    String getString();
+    String getString() throws ParseException;
 
     /**
      * get the current string with decoding bytes if you need
@@ -165,5 +165,5 @@ public interface FastXmlParser {
      * @param needDecode if some characters in current string are not ascii
      * @return readable string or zero if no bytes
      */
-    String getString(boolean needDecode);
+    String getString(boolean needDecode) throws ParseException;
 }

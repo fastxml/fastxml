@@ -25,7 +25,7 @@ import java.nio.charset.Charset;
 
 /**
  * A simple, pull based XML parser for input stream.
- * this parser will reuse a ring byte array as a byte array buffer,
+ * this parser will reuse a ring byte array as a buffer,
  * so it's no need to create any byte array while read bytes from input stream.
  * Created by weager on 2016/06/07.
  */

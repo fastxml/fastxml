@@ -23,6 +23,10 @@ public class ParseException extends Exception {
     private int row;
     private int column;
 
+    public ParseException(String message){
+        super(message);
+    }
+
     public ParseException(String message, int row, int column) {
         super(message);
         this.row = row;
@@ -43,6 +47,10 @@ public class ParseException extends Exception {
         return new ParseException(cause, row, column);
     }
 
+    public static ParseException entityError(String message){
+        return new ParseException(message);
+    }
+
     public static ParseException documentEndUnexpected(int row, int column) {
         String cause = String.format("line[%d], column[%d]: Document end unexpected", row, column);
         return new ParseException(cause, row, column);
@@ -59,5 +67,13 @@ public class ParseException extends Exception {
 
     public int getColumn() {
         return column;
+    }
+
+    public void setRow(int row) {
+        this.row = row;
+    }
+
+    public void setColumn(int column) {
+        this.column = column;
     }
 }

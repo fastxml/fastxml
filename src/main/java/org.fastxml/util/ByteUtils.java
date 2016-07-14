@@ -64,4 +64,23 @@ public class ByteUtils {
         }
         return bs1 == null && bs2 == null;
     }
+
+    /**
+     *
+     * @param bytes
+     * @param begin
+     * @param length
+     * @return
+     */
+    public static String toString(byte[] bytes, int begin, int length){
+        if(length == 0){
+            return null;
+        }
+        int last = begin + length;
+        StringBuilder sb = new StringBuilder();
+        for(int i = begin; i < last; i++){
+            sb.append(bytes[i]);
+        }
+        return sb.toString();
+    }
 }

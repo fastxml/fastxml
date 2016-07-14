@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+<!DOCTYPE bix
+        [
+        <!ELEMENT bix (package+)>
+        <!ELEMENT package (id?, name?)>
+        <!ELEMENT id (#PCDATA)>
+        <!ELEMENT name (#PCDATA)>
+        ]
+        >
+
+<!-- PUBLIC "http://iubio.bio.indiana.edu/grid/runner/docs//bix.dtd" -->
+<!-- FIXME for bix dialog parser - any "choice" field should install runSwitch
+	 from parlist options.  Now have to put each parlist.par runswitch into
+	 action line -->
+<bix>
+
+    <package>
+        <id>111</id>
+        <name>汤姆克鲁兹</name>
+    </package>
+    <package>
+        <id>222</id>
+        <name>weager</name>
+    </package>
+
+</bix><!-- this is comment2 -->

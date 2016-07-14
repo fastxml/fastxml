@@ -1,20 +1,21 @@
 /**
- Copyright 2016 FastXml author(https://github.com/fastxml/fastxml)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
+ * Copyright 2016 FastXml author(https://github.com/fastxml/fastxml)
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.fastxml;
 
+import org.fastxml.exception.ParseException;
 import org.fastxml.exception.NumberFormatException;
 import org.fastxml.exception.ParseException;
 import org.fastxml.util.ByteUtils;
@@ -26,14 +27,13 @@ import java.nio.charset.Charset;
 /**
  * A simple, pull based XML parser for byte array which contain the whole document.
  * FastXml suppose the document is valid, and does not do full validation for best performance, just valid when necessary.
- * FastXml focus on xml content, DECLARE, comment and DOCTYPE will be ignored.
- * for example, no validation for end tag, the first char of tag name etc.
+ * FastXml focus on xml content. DECLARE, comment and DOCTYPE will be ignored.
+ * for example, no validation for end tag name and the first char of tag name, etc.
  * Notice:
- * <li>1. Text should not contain comments.</li>
+ * <li>1. Text content should not contain comments.</li>
  * <li>2. TagName should not contain white space, tab or newline</li>
- * <li>3. all attribute value should be wrapped in double quote</li>
- * <li>4. attribute name should be close to '=', and '=' should be close to '\"' </li>
- * <li>5. both tag name and attribute name only contain ascii chars.</li>
+ * <li>3. both tag name and attribute name only contain ascii chars.</li>
+ * <li>4. TODO: DTD definition should not be in the document</li>
  * Created by weager on 2016/06/07.
  */
 public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
@@ -67,8 +67,10 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
 
     public int next() throws ParseException {
         try {
-            resetCurrent();
             currentEvent = nextEvent;
+            if (currentEvent != END_TAG_WITHOUT_TEXT) {
+                resetCurrent();
+            }
             switch (currentEvent) {
                 case START_DOCUMENT:
                     nextEvent = processStartDocument();
@@ -124,7 +126,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
 
                 if (charset != null) {// if charset has been set, then just finish declaration.
                     for (; cursor < docBytes.length; moveCursor(1)) {
-//                        System.out.print((char) docBytes[cursor]);
                         if (docBytes[cursor] == '?' && docBytes[cursor + 1] == '>') {
                             moveCursor(2);
                             return START_TAG;
@@ -133,7 +134,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                     throw ParseException.documentEndUnexpected(currentRow, currentColumn);
                 } else { // charset has not been set, then find out encoding
                     for (; cursor < docBytes.length; moveCursor(1)) {
-//                        System.out.print((char) docBytes[cursor]);
                         if ((docBytes[cursor] == 'e' || docBytes[cursor] == 'E')
                                 && (docBytes[cursor + 1] == 'n' || docBytes[cursor + 1] == 'N')
                                 && (docBytes[cursor + 2] == 'c' || docBytes[cursor + 2] == 'C')
@@ -144,37 +144,40 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                                 && (docBytes[cursor + 7] == 'g' || docBytes[cursor + 7] == 'G')) {
                             moveCursor(8); // skip "encoding"
                             skipUselessChar();
-                            if(docBytes[cursor] == '='){
+                            if (docBytes[cursor] == '=') {
                                 moveCursor(1);
                                 skipUselessChar();
-                                if(docBytes[cursor] == '\"' || docBytes[cursor] == '\''){
-                                    if(docBytes[cursor] == '\"') {
-                                        inDoubleQuote = true;
-                                    }else {
-                                        inDoubleQuote = false;
-                                    }
+                                if (docBytes[cursor] == '\"' || docBytes[cursor] == '\'') {
+                                    inDoubleQuote = docBytes[cursor] == '\"';
                                     moveCursor(1);
                                     currentIndex = cursor;
-                                    for(; cursor < docBytes.length; moveCursor(1)){
-                                        if((inDoubleQuote && docBytes[cursor] == '\"')
-                                                || (!inDoubleQuote && docBytes[cursor] == '\'')){ // found the end quote
+                                    for (; cursor < docBytes.length; moveCursor(1)) {
+                                        if ((inDoubleQuote && docBytes[cursor] == '\"')
+                                                || (!inDoubleQuote && docBytes[cursor] == '\'')) { // found the end quote
                                             currentBytesLength = cursor - currentIndex;
-                                            String charsetString = this.getString();
-                                            if(charsetString != null){
+                                            String charsetString = null;
+                                            try {
+                                                charsetString = this.getString();
+                                            } catch (ParseException e) {
+                                                charsetString = null;
+                                            }
+                                            if (charsetString != null) {
                                                 try {
                                                     charset = Charset.forName(charsetString);
-                                                }catch (Exception e){}
+                                                } catch (Exception e) {
+                                                    throw ParseException.formatError("encoding is not found or charset is not correct", currentRow, currentColumn);
+                                                }
                                             }
-                                            if(charset == null){
+                                            if (charset == null) {
                                                 throw ParseException.formatError("encoding is not found or charset is not correct", currentRow, currentColumn);
                                             }
                                             break;
                                         }
                                     }
-                                }else{
+                                } else {
                                     throw ParseException.formatError("need '\"' or '\'' here", currentRow, currentColumn);
                                 }
-                            }else{
+                            } else {
                                 throw ParseException.formatError("need '=' here", currentRow, currentColumn);
                             }
                         } else if (docBytes[cursor] == '?' && docBytes[cursor + 1] == '>') {
@@ -212,7 +215,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
         // the first char has bean validated in previous event, so just skip it.
         // to see: processAfterEndTag() and processStartDocument()
         for (; cursor < docBytes.length; moveCursor(1)) {
-//            System.out.print((char) docBytes[cursor]);
             if (ByteUtils.isNotValidTokenChar(docBytes[cursor])) {
                 if (docBytes[cursor] == '>') { // start tag
                     currentBytesLength = cursor - currentIndex;
@@ -242,9 +244,10 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     private int processEndTag() throws ParseException {
         if (docBytes[cursor] == '<' && docBytes[cursor + 1] == '/') {
             moveCursor(2);
+            resetCurrent();
             for (; cursor < docBytes.length; moveCursor(1)) {
-//                System.out.print((char) docBytes[cursor]);
                 if (docBytes[cursor] == '>') {// the tag end
+                    currentBytesLength = cursor - currentIndex;
                     moveCursor(1);
                     if (cursor == docBytes.length) {
                         return END_DOCUMENT;
@@ -267,6 +270,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private int processEndTagWithoutText() throws ParseException {
         if (docBytes[cursor] == '/' && docBytes[cursor + 1] == '>') {
+            currentBytesLength = cursor - currentIndex;
             moveCursor(2);
             return processAfterEndTag();
         } else {
@@ -324,13 +328,14 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * <li>another end tag</li>
      * <li>another start tag</li>
      * <li>end document</li>
+     *
      * @return next event
      * @throws ParseException
      */
     private int processAfterEndTag() throws ParseException {
         skipUselessChar();
         // continue to find out next event
-        if(cursor == docBytes.length) {
+        if (cursor == docBytes.length) {
             return END_DOCUMENT;
         } else if (docBytes[cursor] == '<') {
             if (docBytes[cursor + 1] == '/') { // found another end tag
@@ -354,7 +359,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private int processAttributeName() throws ParseException {
         for (; cursor < docBytes.length; moveCursor(1)) {// read tag bytes
-//            System.out.print((char) docBytes[cursor]);
             if (ByteUtils.isNotValidTokenChar(docBytes[cursor])) {// this attribute name end
                 currentBytesLength = cursor - currentIndex;
                 skipUselessChar(); // skip ' ' and '\t' between attribute name and '='
@@ -362,15 +366,12 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                 if (docBytes[cursor] == '=') {
                     moveCursor(1);
                     skipUselessChar(); // skip ' ' and '\t' between '=' and attribute value
-                    if(docBytes[cursor] == '\"' || docBytes[cursor] == '\'') { // found the quotation at the beginning of attribute value
-                        if (docBytes[cursor] == '\"') { // check doubleQuote or singleQuote
-                            inDoubleQuote = true;
-                        } else {
-                            inDoubleQuote = false;
-                        }
+                    if (docBytes[cursor] == '\"' || docBytes[cursor] == '\'') { // found the quotation at the beginning of attribute value
+                        // check doubleQuote or singleQuote
+                        inDoubleQuote = docBytes[cursor] == '\"';
                         moveCursor(1);
                         return ATTRIBUTE_VALUE; // found attribute value
-                    }else{
+                    } else {
                         throw ParseException.formatError("need '\"' or '\'' here", currentRow, currentColumn);
                     }
                 } else {
@@ -392,7 +393,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private int processAttributeValue() throws ParseException {
         for (; cursor < docBytes.length; moveCursor(1)) {
-//            System.out.print((char) docBytes[cursor]);
             if ((inDoubleQuote && docBytes[cursor] == '\"') || (!inDoubleQuote && docBytes[cursor] == '\'')) {// found another quotation, it's the end of attribute value
                 currentBytesLength = cursor - currentIndex; // length of attribute value
                 moveCursor(1);
@@ -417,7 +417,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     /**
      * Text wrapped by a pair of tag.
      * this method will not get rid of CDATA block, because it will break the order of docBytes.
-     * The exact text will be extract in get method of IConverter, such as getString(),getInt()
+     * The exact text will be extract in getString() or getString(boolean) or getInt() or getLong() or getDouble() or getFloat() method etc.
      *
      * @return next event
      * @throws ParseException
@@ -425,7 +425,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     private int processText() throws ParseException {
         boolean inCDATA = false;
         for (; cursor < docBytes.length; moveCursor(1)) {
-//            System.out.print((char) docBytes[cursor]);
             if (docBytes[cursor] == '\n') {
                 newLine();
             }
@@ -462,64 +461,82 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
         int beginIndex = cursor;
         boolean inCommentBlock = false;
 
-        // DOCTYPE define in external file:
-        // <!DOCTYPE customer SYSTEM "http://www.myserver.com/xml/custemer.dtd">
-        //
-        // DOCTYPE define in doc:
-        // <!DOCTYPE message [
-        //      <!ELEMENT message (header, body, (signature | footer))>
-        //      <!ElEMENT header (data, from, to+, subject, banner?)>
-        //      ......
-        // ]>
-        boolean docTypeDefineInDoc = false;
-        boolean inDocTypeBlock = false;
-
         for (; cursor < docBytes.length; moveCursor(1)) {
-//            System.out.print((char) docBytes[cursor]);
             if (docBytes[cursor] == ' ' || docBytes[cursor] == '\t' || docBytes[cursor] == '\r') { // found useless character
-                continue;
-            } else if (docBytes[cursor] == '\n') { // new line
+                // continue
+            } else if (docBytes[cursor] == '\n') { // found new line
                 newLine();
-                continue;
-            } else if (inCommentBlock || inDocTypeBlock) {
-                if (docBytes[cursor] == '-' && cursor + 2 < docBytes.length && docBytes[cursor + 1] == '-' && docBytes[cursor + 2] == '>') { // comment end
-                    moveCursor(2); // jump 2 step to finish comment
-                    inCommentBlock = false;
-                } else if ((docBytes[cursor] == '>' && !docTypeDefineInDoc)
-                        || (docBytes[cursor] == '>' && docBytes[cursor - 1] == ']' && docTypeDefineInDoc)) { // DOCTYPE block end
-                    inDocTypeBlock = false;
-                }
-                continue;
+                // continue
             } else if (docBytes[cursor] == '<' && cursor + 3 < docBytes.length
                     && docBytes[cursor + 1] == '!' && docBytes[cursor + 2] == '-' && docBytes[cursor + 3] == '-') { // found comment
-                inCommentBlock = true;
-                moveCursor(3);
-                continue;
+                skipComment();
+                // continue
             } else if (docBytes[cursor] == '<' && cursor + 8 < docBytes.length
                     && docBytes[cursor + 1] == '!' && docBytes[cursor + 2] == 'D'
                     && docBytes[cursor + 3] == 'O' && docBytes[cursor + 4] == 'C'
                     && docBytes[cursor + 5] == 'T' && docBytes[cursor + 6] == 'Y'
-                    && docBytes[cursor + 7] == 'P' && docBytes[cursor + 8] == 'E') { // found DOCTYPE block
-                inDocTypeBlock = true;
-                moveCursor(8);
-                continue;
+                    && docBytes[cursor + 7] == 'P' && docBytes[cursor + 8] == 'E') { // found DTD DOCTYPE
+                skipDocType();
+                // continue
             } else {
-                if (inDocTypeBlock && docBytes[cursor] == '[') {
-                    docTypeDefineInDoc = true;
-                    continue;
-                } else {
-                    break;
-                }
+                break;
             }
         }
-        if (inCommentBlock) { // comment does close
-            throw ParseException.formatError("comment should be closed", currentRow, currentColumn);
+        return cursor - beginIndex;
+    }
+
+    /**
+     * skip DTD DOCTYPE block
+     * <p>
+     * DOCTYPE define in external file:
+     * <!DOCTYPE customer SYSTEM "http://www.myserver.com/xml/custemer.dtd">
+     * <p>
+     * DOCTYPE define in doc:
+     * <!DOCTYPE message [
+     * <!ELEMENT message (header, body, (signature | footer))>
+     * <!ElEMENT header (data, from, to+, subject, banner?)>
+     * ......
+     * ]>
+     *
+     * @throws ParseException
+     */
+    private void skipDocType() throws ParseException {
+        moveCursor(8); // skip "<!DOCTYPE"
+        boolean docTypeDefineInDoc = false;
+        for (; cursor < docBytes.length; moveCursor(1)) {
+            if (!docTypeDefineInDoc && docBytes[cursor] == '[') { // DTD DOCTYPE defined in document
+                docTypeDefineInDoc = true;
+            } else if (docTypeDefineInDoc) {
+                boolean foundEndBracket = false;
+                for (; cursor < docBytes.length; moveCursor(1)) {
+                    if (!foundEndBracket && docBytes[cursor] == ']') {
+                        foundEndBracket = true;
+                    } else if (foundEndBracket && docBytes[cursor] == '>') { // doctype end
+                        return;
+                    }
+                }
+            } else if (docBytes[cursor] == '>') { // doctype end
+                return;
+            }
         }
-        if (inDocTypeBlock) { // comment does close
-            throw ParseException.formatError("DOCTYPE should be closed", currentRow, currentColumn);
+        throw ParseException.formatError("DTD DOCTYPE does not closed", currentRow, currentColumn);
+    }
+
+    /**
+     * skip comment block
+     *
+     * @throws ParseException
+     */
+    private void skipComment() throws ParseException {
+        moveCursor(4); // skip "<!--"
+        for (; cursor < docBytes.length; moveCursor(1)) {
+            if (docBytes[cursor] == '-' && cursor + 2 < docBytes.length
+                    && docBytes[cursor + 1] == '-' && docBytes[cursor + 2] == '>') { // comment end
+                moveCursor(2); // skip "-->"
+                return;
+            }
         }
-        int skipCharCount = cursor - beginIndex;
-        return skipCharCount;
+        throw ParseException.formatError("comment does not closed", currentRow, currentColumn);
     }
 
     /**
@@ -586,35 +603,102 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
         return bytes;
     }
 
-    public String getString() {
-        return ParseUtils.parseString(docBytes, currentIndex, currentBytesLength);
+    public String getString() throws ParseException {
+        try {
+            return ParseUtils.parseString(docBytes, currentIndex, currentBytesLength);
+        } catch (ParseException e) {
+            e.setRow(currentRow);
+            e.setColumn(currentColumn);
+            throw e;
+        }
     }
 
-    public String getString(boolean needDecode) {
-        if(needDecode) {
-            return ParseUtils.parseString(docBytes, currentIndex, currentBytesLength, charset);
-        }else{
-            return getString();
+    public String getString(boolean needDecode) throws ParseException {
+        try {
+            if (needDecode) {
+                return ParseUtils.parseString(docBytes, currentIndex, currentBytesLength, charset);
+            } else {
+                return getString();
+            }
+        } catch (ParseException e) {
+            e.setRow(currentRow);
+            e.setColumn(currentColumn);
+            throw e;
         }
     }
 
     public short getShort() throws NumberFormatException {
-        return ParseUtils.parseShort(docBytes, currentIndex, currentBytesLength, charset);
+        try {
+            return ParseUtils.parseShort(docBytes, currentIndex, currentBytesLength);
+        } catch (NumberFormatException e) {
+            try {
+                e.setRawString(this.getString(true));
+            } catch (ParseException ee) { // throw the real cause
+                e = new NumberFormatException(ee.getMessage(), null);
+            }
+            e.setRow(currentRow);
+            e.setColumn(currentColumn);
+            throw e;
+        }
     }
 
     public int getInt() throws NumberFormatException {
-        return ParseUtils.parseInt(docBytes, currentIndex, currentBytesLength, charset);
+        try {
+            return ParseUtils.parseInt(docBytes, currentIndex, currentBytesLength);
+        } catch (NumberFormatException e) {
+            try {
+                e.setRawString(this.getString(true));
+            } catch (ParseException ee) { // throw the real cause
+                e = new NumberFormatException(ee.getMessage(), null);
+            }
+            e.setRow(currentRow);
+            e.setColumn(currentColumn);
+            throw e;
+        }
     }
 
     public long getLong() throws NumberFormatException {
-        return ParseUtils.parseLong(docBytes, currentIndex, currentBytesLength, charset);
+        try {
+            return ParseUtils.parseLong(docBytes, currentIndex, currentBytesLength);
+        } catch (NumberFormatException e) {
+            try {
+                e.setRawString(this.getString(true));
+            } catch (ParseException ee) { // throw the real cause
+                e = new NumberFormatException(ee.getMessage(), null);
+            }
+            e.setRow(currentRow);
+            e.setColumn(currentColumn);
+            throw e;
+        }
     }
 
     public float getFloat() throws NumberFormatException {
-        return ParseUtils.parseFloat(docBytes, currentIndex, currentBytesLength, charset);
+        try {
+            return ParseUtils.parseFloat(docBytes, currentIndex, currentBytesLength);
+        } catch (NumberFormatException e) {
+            try {
+                e.setRawString(this.getString(true));
+            } catch (ParseException ee) { // throw the real cause
+                e = new NumberFormatException(ee.getMessage(), null);
+            }
+            e.setRow(currentRow);
+            e.setColumn(currentColumn);
+            throw e;
+        }
     }
 
     public double getDouble() throws NumberFormatException {
-        return ParseUtils.parseDouble(docBytes, currentIndex, currentBytesLength, charset);
+        try {
+            return ParseUtils.parseDouble(docBytes, currentIndex, currentBytesLength);
+        } catch (NumberFormatException e) {
+            try {
+                e.setRawString(this.getString(true));
+            } catch (ParseException ee) { // throw the real cause
+                e = new NumberFormatException(ee.getMessage(), null);
+            }
+            e.setRow(currentRow);
+            e.setColumn(currentColumn);
+            throw e;
+        }
     }
 }
