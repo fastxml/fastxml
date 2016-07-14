@@ -14,11 +14,14 @@
 *(Beta version now, welcome to merge request or submit issues)*
 
 # Why FastXml
- * Very good performance, nearly twice as fast as VTD-XMl or XPP3/MXP1
- * Very small memory footprint
+ * Very good performance, nearly twice as fast as VTD-XMl and 30% faster than XPP3/MXP1
+ * Hardly consumes memory, save more memory than VTD-XML and XPP3/MXP1
  * No dependencies
  * Minimum size of jar(size<16K), great in J2ME environment
  * The api of FastXml is very simple and easy to use
+
+# Benchmark
+[https://github.com/fastxml/fastxml-benchmark](https://github.com/fastxml/fastxml-benchmark)
 
 # How could FastXml be so fast
  * Decoding characters as few as possible. Not all character need decode,
