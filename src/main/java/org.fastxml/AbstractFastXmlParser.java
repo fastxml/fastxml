@@ -43,6 +43,17 @@ public abstract class AbstractFastXmlParser implements FastXmlParser {
     protected int currentBytesLength;
 
     /**
+     * mark current attribute value in double quotes when currentEvent==ATTRIBUTE_VALUE,
+     * attribute value may be wrapped by double quotes or single quotes
+     */
+    protected boolean currentInDoubleQuote;
+
+    /**
+     * mark current token contain entity reference
+     */
+    protected boolean currentHasEntityReference;
+
+    /**
      * current event that has already checked
      */
     protected int currentEvent;

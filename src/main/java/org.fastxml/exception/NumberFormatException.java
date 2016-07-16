@@ -22,8 +22,8 @@ public class NumberFormatException extends ParseException {
     private String rawString;
 
 
-    public NumberFormatException(String message, String rawString) {
-        super(message);
+    public NumberFormatException(String message, Throwable throwable) {
+        super(message, throwable);
         this.rawString = rawString;
     }
 
@@ -35,29 +35,12 @@ public class NumberFormatException extends ParseException {
         this.rawString = rawString;
     }
 
-    public static NumberFormatException formatException(String rawString, String type) {
-        String message = String.format("could not parse bytes[%s] to %s", rawString, type);
-        return new NumberFormatException(message, rawString);
+    @Override
+    public String getMessage(){
+        return getMessage(" [rawString:" + rawString + "]" + super.getMessage());
     }
 
-    public static NumberFormatException intFormatException(String rawString) {
-        return formatException(rawString, "int");
+    public static NumberFormatException formatException(String message, Throwable throwable) {
+        return new NumberFormatException(message, throwable);
     }
-
-    public static NumberFormatException shortFormatException(String rawString) {
-        return formatException(rawString, "short");
-    }
-
-    public static NumberFormatException longFormatException(String rawString) {
-        return formatException(rawString, "long");
-    }
-
-    public static NumberFormatException floatFormatException(String rawString) {
-        return formatException(rawString, "float");
-    }
-
-    public static NumberFormatException doubleFormatException(String rawString) {
-        return formatException(rawString, "double");
-    }
-
 }

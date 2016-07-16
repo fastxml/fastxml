@@ -32,10 +32,11 @@ public class ParseUtils {
      * @param bytes  the byte array
      * @param begin  the beginning index, inclusive.
      * @param length the length of bytes need to be parsed
+     * @param decodeEntityReference true: will check and parse entity reference, otherwise not check
      * @return string parse from bytes. if the length of string is 0, then return null
      */
-    public static String parseString(byte[] bytes, int begin, int length) throws ParseException {
-        return parseString(bytes, begin, length, null);
+    public static String parseString(byte[] bytes, int begin, int length, boolean decodeEntityReference) throws ParseException {
+        return parseString(bytes, begin, length, null, decodeEntityReference);
     }
 
     /**
@@ -45,9 +46,10 @@ public class ParseUtils {
      * @param begin   the beginning index, inclusive.
      * @param length  the length of bytes need to be parsed
      * @param charset use the charset to encoding bytes, directly cast byte to char if charset == null
+     * @param decodeEntityReference true: will check and parse entity reference, otherwise not check
      * @return string parse from bytes. if the length of string is 0, then return null
      */
-    public static String parseString(byte[] bytes, int begin, int length, Charset charset) throws ParseException {
+    public static String parseString(byte[] bytes, int begin, int length, Charset charset, boolean decodeEntityReference) throws ParseException {
         if (length == 0) {
             return null;
         }
@@ -62,7 +64,7 @@ public class ParseUtils {
                     && bytes[i + 7] == 'A' && bytes[i + 8] == '[') { // found "<![CDATA["
                 length4Segment = i - beginIndex4Segment;
                 if (length4Segment > 0) {
-                    sb.append(internalParseString(bytes, beginIndex4Segment, length4Segment, charset, false));
+                    sb.append(internalParseString(bytes, beginIndex4Segment, length4Segment, charset, decodeEntityReference));
                 }
                 i += 8; // skip "<![CDATA["
                 beginIndex4Segment = i + 1;
@@ -70,18 +72,18 @@ public class ParseUtils {
             } else if (inCDATABlock && bytes[i] == ']' && bytes[i + 1] == ']' && bytes[i + 2] == '>') { // found "]]>"
                 length4Segment = i - beginIndex4Segment;
                 if (length4Segment > 0) {
-                    sb.append(internalParseString(bytes, beginIndex4Segment, length4Segment, charset, true));
+                    sb.append(internalParseString(bytes, beginIndex4Segment, length4Segment, charset, false));
                 }
                 i += 2; // skip "]]"
                 beginIndex4Segment = i + 1;
                 inCDATABlock = false;
             } else if (i + 1 >= lastIndex) { // last byte
-                if(inCDATABlock){ // commend not closed
+                if (inCDATABlock) { // commend not closed
                     throw ParseException.formatError("comment not closed correctly", 0, i + 1);
                 }
                 length4Segment = i + 1 - beginIndex4Segment;
                 if (length4Segment > 0) {
-                    sb.append(internalParseString(bytes, beginIndex4Segment, length4Segment, charset, false));
+                    sb.append(internalParseString(bytes, beginIndex4Segment, length4Segment, charset, decodeEntityReference));
                 }
                 break;
             }
@@ -98,10 +100,11 @@ public class ParseUtils {
      * @param bytes  the byte array
      * @param begin  the beginning index, inclusive.
      * @param length the length of bytes need to be parsed
+     * @param decodeEntityReference true: will check and parse entity reference, otherwise not check
      * @return string parse from bytes. if the length of string is 0, then return null
      */
-    public static String parseTrimString(byte[] bytes, int begin, int length) throws ParseException {
-        return parseTrimString(bytes, begin, length, null);
+    public static String parseTrimedString(byte[] bytes, int begin, int length, boolean decodeEntityReference) throws ParseException {
+        return parseTrimedString(bytes, begin, length, null, decodeEntityReference);
     }
 
     /**
@@ -111,9 +114,10 @@ public class ParseUtils {
      * @param begin   the beginning index, inclusive.
      * @param length  the length of bytes need to be parsed
      * @param charset use the charset to encoding bytes, directly cast byte to char if charset == null
+     * @param decodeEntityReference true: will check and parse entity reference, otherwise not check
      * @return string parse from bytes. if the length of string is 0, then return null
      */
-    public static String parseTrimString(byte[] bytes, int begin, int length, Charset charset) throws ParseException {
+    public static String parseTrimedString(byte[] bytes, int begin, int length, Charset charset, boolean decodeEntityReference) throws ParseException {
         if (length == 0) {
             return null;
         }
@@ -126,9 +130,9 @@ public class ParseUtils {
             if (bytes[i] != ' ' && bytes[i] != '\t') {
                 allWhiteSpace = false;
                 newBegin = i;
-                if (i + 1 == last) { // newLength == 1
+                if (i + 1 == last) { // over, so newLength == 1
                     newLength = 1;
-                    return parseString(bytes, newBegin, newLength, charset);
+                    return parseString(bytes, newBegin, newLength, charset, decodeEntityReference);
                 }
                 break;
             }
@@ -139,7 +143,7 @@ public class ParseUtils {
         for (int j = last - 1; j >= newBegin; j--) { // backward to find a valid char
             if (bytes[j] != ' ' && bytes[j] != '\t') {
                 newLength = j - newBegin + 1;
-                return parseString(bytes, newBegin, newLength, charset);
+                return parseString(bytes, newBegin, newLength, charset, decodeEntityReference);
             }
         }
         return null;
@@ -152,30 +156,28 @@ public class ParseUtils {
      * @param begin   the beginning index, inclusive.
      * @param length  the length of bytes need to be parsed
      * @param charset use the charset to encoding bytes, directly cast byte to char if charset == null
+     * @param decodeEntityReference true: will check and parse entity reference, otherwise not check
      * @return string parse from bytes. if the length of string is 0, then return null
      */
-    private static String internalParseString(byte[] bytes, int begin, int length, Charset charset, boolean isCDATA) throws ParseException {
-        if (isCDATA) {
-            if (charset != null) { // need encoding
-                return new String(bytes, begin, length, charset);
-            } else { // no need encoding
-                StringBuilder sb = new StringBuilder(length);
-                for (int i = 0; i < length; i++) {
-                    sb.append((char) bytes[i + begin]);
-                }
-                return sb.toString();
-            }
-        } else {
+    private static String internalParseString(byte[] bytes, int begin, int length, Charset charset, boolean decodeEntityReference) throws ParseException {
+        if (decodeEntityReference) {
             if (charset != null) { // need encoding
                 return parseEntityReference4String(new String(bytes, begin, length, charset));
             } else { // no need encoding
                 return parseEntityReference4Bytes(bytes, begin, length);
+            }
+        } else {
+            if (charset != null) { // need encoding
+                return new String(bytes, begin, length, charset);
+            } else { // no need encoding
+                return toString(bytes, begin, length);
             }
         }
     }
 
     /**
      * parse XML Entity References: https://msdn.microsoft.com/en-us/library/windows/desktop/dd892769(v=vs.85).aspx
+     *
      * @param str input string
      * @return string with replacing entity reference to the single specific character
      * @throws ParseException
@@ -196,6 +198,7 @@ public class ParseUtils {
                     case '#':
                         i++;
                         if (str.charAt(i) == 'x') { // Hexadecimal reference
+                            i++;
                             for (; i < length; i++) {
                                 ch = str.charAt(i);
                                 if (ch >= '0' && ch <= '9') {
@@ -222,10 +225,12 @@ public class ParseUtils {
                                     throw ParseException.entityError("Errors in char reference: Illegal char following &#");
                             }
                         }
+                        break;
                     case 'a':
                         if (str.charAt(++i) == 'm') {
                             if (str.charAt(++i) == 'p' && str.charAt(++i) == ';') { // &amp; --> &
                                 sb.append('&');
+                                break;
                             } else
                                 throw ParseException.entityError("Errors in Entity: should be '&amp;' here");
                         } else if (str.charAt(++i) == 'p') {
@@ -233,6 +238,7 @@ public class ParseUtils {
                                     && str.charAt(++i) == 's'
                                     && str.charAt(++i) == ';') { // &apos; --> '
                                 sb.append('\'');
+                                break;
                             } else
                                 throw ParseException.entityError("Errors in Entity: should be '&apos;' here");
                         } else
@@ -244,16 +250,19 @@ public class ParseUtils {
                                 && str.charAt(++i) == 't'
                                 && str.charAt(++i) == ';') { // &quot; --> "
                             sb.append('"');
+                            break;
                         } else
                             throw ParseException.entityError("Errors in Entity: should be '&quot;' here");
                     case 'l':
                         if (str.charAt(++i) == 't' && str.charAt(++i) == ';') { // &lt; --> <
                             sb.append('<');
+                            break;
                         } else
                             throw ParseException.entityError("Errors in Entity: should be '&lt;' here");
                     case 'g':
                         if (str.charAt(++i) == 't' && str.charAt(++i) == ';') { // &gt; --> >
                             sb.append('>');
+                            break;
                         } else
                             throw ParseException.entityError("Errors in Entity: should be '&gt;' here");
                     default:
@@ -268,8 +277,9 @@ public class ParseUtils {
 
     /**
      * parse XML Entity References: https://msdn.microsoft.com/en-us/library/windows/desktop/dd892769(v=vs.85).aspx
-     * @param bytes the byte array
-     * @param begin the beginning index, inclusive.
+     *
+     * @param bytes  the byte array
+     * @param begin  the beginning index, inclusive.
      * @param length the length of bytes need to be parsed
      * @return string with replacing entity reference to the single specific character
      * @throws ParseException
@@ -290,6 +300,7 @@ public class ParseUtils {
                     case '#':
                         i++;
                         if (bytes[i] == 'x') { // Hexadecimal reference
+                            i++;
                             for (; i < end; i++) {
                                 b = bytes[i];
                                 if (b >= '0' && b <= '9') {
@@ -368,6 +379,8 @@ public class ParseUtils {
 
 
     /**
+     * parse bytes to integer
+     *
      * @param bytes  the byte array
      * @param begin  the beginning index, inclusive.
      * @param length the length of bytes need to be parsed, if length == 0, a NumberFormatException will thrown
@@ -390,10 +403,10 @@ public class ParseUtils {
                     negative = true;
                     limit = Integer.MIN_VALUE;
                 } else if (firstChar != '+')
-                    throw NumberFormatException.intFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
 
                 if (length == 1) // Cannot have lone "+" or "-"
-                    throw NumberFormatException.intFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
                 i++;
             }
             multmin = limit / radix;
@@ -402,24 +415,26 @@ public class ParseUtils {
                 digit = Character.digit((char) bytes[i + begin], radix);
                 i++;
                 if (digit < 0) {
-                    throw NumberFormatException.intFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
                 }
                 if (result < multmin) {
-                    throw NumberFormatException.intFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
                 }
                 result *= radix;
                 if (result < limit + digit) {
-                    throw NumberFormatException.intFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
                 }
                 result -= digit;
             }
         } else {
-            throw NumberFormatException.intFormatException("null");
+            throw NumberFormatException.formatException("can't convert null to integer", null);
         }
         return negative ? result : -result;
     }
 
     /**
+     * parse bytes to short
+     *
      * @param bytes  the byte array
      * @param begin  the beginning index, inclusive.
      * @param length the length of bytes need to be parsed
@@ -431,6 +446,8 @@ public class ParseUtils {
     }
 
     /**
+     * parse bytes to long
+     *
      * @param bytes  the byte array
      * @param begin  the beginning index, inclusive.
      * @param length the length of bytes need to be parsed
@@ -453,10 +470,10 @@ public class ParseUtils {
                     negative = true;
                     limit = Long.MIN_VALUE;
                 } else if (firstChar != '+')
-                    throw NumberFormatException.longFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
 
                 if (length == 1) // Cannot have lone "+" or "-"
-                    throw NumberFormatException.longFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
                 i++;
             }
             multmin = limit / radix;
@@ -465,24 +482,26 @@ public class ParseUtils {
                 digit = Character.digit((char) bytes[i + begin], radix);
                 i++;
                 if (digit < 0) {
-                    throw NumberFormatException.longFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
                 }
                 if (result < multmin) {
-                    throw NumberFormatException.longFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
                 }
                 result *= radix;
                 if (result < limit + digit) {
-                    throw NumberFormatException.longFormatException(ByteUtils.toString(bytes, begin, length));
+                    throw NumberFormatException.formatException(toString(bytes, begin, length), null);
                 }
                 result -= digit;
             }
         } else {
-            throw NumberFormatException.intFormatException("null");
+            throw NumberFormatException.formatException("can't convert null to long", null);
         }
         return negative ? result : -result;
     }
 
     /**
+     * parse bytes to float
+     *
      * @param bytes  the byte array
      * @param begin  the beginning index, inclusive.
      * @param length the length of bytes need to be parsed
@@ -490,18 +509,25 @@ public class ParseUtils {
      * @throws NumberFormatException
      */
     public static float parseFloat(byte[] bytes, int begin, int length) throws NumberFormatException {
-        String str = ByteUtils.toString(bytes, begin, length);
+        String str;
+        try {
+            str = parseString(bytes, begin, length, false);
+        } catch (ParseException e) {
+            throw NumberFormatException.formatException(e.getMessage(), e);
+        }
         if (str == null) {
-            throw NumberFormatException.intFormatException("null");
+            throw NumberFormatException.formatException("can't convert null to float", null);
         }
         try {
             return Float.parseFloat(str);
         } catch (java.lang.NumberFormatException e) {
-            throw NumberFormatException.floatFormatException(ByteUtils.toString(bytes, begin, length));
+            throw NumberFormatException.formatException(e.getMessage(), e);
         }
     }
 
     /**
+     * parse bytes to double
+     *
      * @param bytes  the byte array
      * @param begin  the beginning index, inclusive.
      * @param length the length of bytes need to be parsed
@@ -509,16 +535,39 @@ public class ParseUtils {
      * @throws NumberFormatException
      */
     public static double parseDouble(byte[] bytes, int begin, int length) throws NumberFormatException {
-        String str = ByteUtils.toString(bytes, begin, length);
+        String str;
+        try {
+            str = parseString(bytes, begin, length, false);
+        } catch (ParseException e) {
+            throw NumberFormatException.formatException(e.getMessage(), e);
+        }
         if (str == null) {
-            throw NumberFormatException.intFormatException("null");
+            throw NumberFormatException.formatException("can't convert null to double", null);
         }
         try {
             return Double.parseDouble(str);
         } catch (java.lang.NumberFormatException e) {
-            throw NumberFormatException.doubleFormatException(ByteUtils.toString(bytes, begin, length));
+            throw NumberFormatException.formatException(e.getMessage(), e);
         }
     }
 
-
+    /**
+     * parse byte to char one by one
+     *
+     * @param bytes  the byte array
+     * @param begin  the beginning index, inclusive.
+     * @param length the length of bytes need to be parsed
+     * @return string parse from bytes. if the length of string is 0, then return null
+     */
+    static String toString(byte[] bytes, int begin, int length) {
+        if (length == 0) {
+            return null;
+        }
+        int last = begin + length;
+        StringBuilder sb = new StringBuilder();
+        for (int i = begin; i < last; i++) {
+            sb.append((char) bytes[i]);
+        }
+        return sb.toString();
+    }
 }

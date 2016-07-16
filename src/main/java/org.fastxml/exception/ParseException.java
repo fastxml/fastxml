@@ -27,14 +27,35 @@ public class ParseException extends Exception {
         super(message);
     }
 
-    public ParseException(String message, int row, int column) {
-        super(message);
+    public ParseException(String message, int row, int column){
+        this(message, row, column, null);
+    }
+
+    public ParseException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ParseException(String message, int row, int column, Throwable cause) {
+        super(message, cause);
         this.row = row;
         this.column = column;
     }
 
+    @Override
+    public String getMessage(){
+        return getMessage(super.getMessage());
+    }
+
+    protected String getMessage(String message){
+        StringBuilder sb = new StringBuilder();
+        // position
+        sb.append("line[").append(row).append("], column[").append(column).append("]: ");
+        sb.append(message);
+        return sb.toString();
+    }
+
     public static ParseException tagNotClosed(int row, int column) {
-        String cause = String.format("line[%d], column[%d]: tag does not close correctly", row, column);
+        String cause = String.format("tag does not close correctly", row, column);
         return new ParseException(cause, row, column);
     }
 
@@ -43,7 +64,7 @@ public class ParseException extends Exception {
     }
 
     public static ParseException otherError(int row, int column) {
-        String cause = String.format("line[%d], column[%d]: Other error: invalid parser state", row, column);
+        String cause = String.format("Other error: invalid parser state", row, column);
         return new ParseException(cause, row, column);
     }
 
@@ -52,12 +73,12 @@ public class ParseException extends Exception {
     }
 
     public static ParseException documentEndUnexpected(int row, int column) {
-        String cause = String.format("line[%d], column[%d]: Document end unexpected", row, column);
+        String cause = String.format("Document end unexpected", row, column);
         return new ParseException(cause, row, column);
     }
 
     public static ParseException formatError(String msg, int row, int column) {
-        String cause = String.format("line[%d], column[%d]: Document has error format: %s", row, column, msg);
+        String cause = String.format("Document has error format: %s", row, column, msg);
         return new ParseException(cause, row, column);
     }
 

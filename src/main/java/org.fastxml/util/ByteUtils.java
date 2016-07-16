@@ -1,17 +1,17 @@
 /**
- Copyright 2016 FastXml author(https://github.com/fastxml/fastxml)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
+ * Copyright 2016 FastXml author(https://github.com/fastxml/fastxml)
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.fastxml.util;
 
@@ -44,7 +44,9 @@ public class ByteUtils {
     /**
      * compare two byte array segment.
      * Note: if both are empty, they are the same
-     * !null, null -> false; null, !null -> false; null, null -> true
+     * <li>!null, null -> false;</li>
+     * <li>null, !null -> false;</li>
+     * <li>null, null -> true</li>
      *
      * @param bs1    byte array 1
      * @param start1 index of bs1
@@ -65,22 +67,4 @@ public class ByteUtils {
         return bs1 == null && bs2 == null;
     }
 
-    /**
-     *
-     * @param bytes
-     * @param begin
-     * @param length
-     * @return
-     */
-    public static String toString(byte[] bytes, int begin, int length){
-        if(length == 0){
-            return null;
-        }
-        int last = begin + length;
-        StringBuilder sb = new StringBuilder();
-        for(int i = begin; i < last; i++){
-            sb.append(bytes[i]);
-        }
-        return sb.toString();
-    }
 }

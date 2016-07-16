@@ -26,10 +26,11 @@ import java.nio.charset.Charset;
 public class FastXmlFactory {
 
     /**
-     * to create fast xml parser according to the variate parameters.
+     * to create fast xml parser according to the variate parameters, without locating any memory,
+     * so you can call this method any times as you want.
      *
      * @param objs Usage: <br>
-     *             <li>FastXmlParser.newInstance(getInputStream(), bufferSize)</li>
+     *             <li>FastXmlParser.newInstance(getInputStream(), bufferSize) *not support yet*</li>
      *             <li>FastXmlParser.newInstance(byteArray)</li>
      *             <li>FastXmlParser.newInstance(byteArray, Charset.name("utf8")</li>
      * @return

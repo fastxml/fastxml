@@ -115,7 +115,15 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
     }
 
     public String getString(boolean needDecode) {
-//        if()
+        return null;
+    }
+
+    public String getTrimedString() {
+
+        return null;
+    }
+
+    public String getTrimedString(boolean needDecode) {
         return null;
     }
 
