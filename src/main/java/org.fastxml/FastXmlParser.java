@@ -53,7 +53,7 @@ public interface FastXmlParser {
 
     /**
      * get next event before next() method called. You can call this method without worry it
-     * This method will directly return the next event which has parsed in perv next(),
+     * This method will directly return the next event which has parsed in perv next() method,
      * and will not parse bytes
      * @return event type
      */

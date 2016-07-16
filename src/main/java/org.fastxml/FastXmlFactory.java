@@ -30,9 +30,9 @@ public class FastXmlFactory {
      * so you can call this method any times as you want.
      *
      * @param objs Usage: <br>
-     *             <li>FastXmlParser.newInstance(getInputStream(), bufferSize) *not support yet*</li>
-     *             <li>FastXmlParser.newInstance(byteArray)</li>
-     *             <li>FastXmlParser.newInstance(byteArray, Charset.name("utf8")</li>
+     *             <li>FastXmlFactory.newInstance(InputStream in, int bufferSize) *not support yet*</li>
+     *             <li>FastXmlFactory.newInstance(byte[] byteArray)</li>
+     *             <li>FastXmlFactory.newInstance(byte[] byteArray, Charset charset)</li>
      * @return
      * @throws ParseException
      */
