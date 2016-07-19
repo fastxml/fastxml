@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fastxml;
+package com.github.fastxml;
+
+import com.github.fastxml.exception.NumberFormatException;
+import com.github.fastxml.exception.ParseException;
 
 import java.nio.charset.Charset;
-
-import org.fastxml.exception.ParseException;
-import org.fastxml.exception.NumberFormatException;
 
 /**
  * The interface of FastXml。
@@ -38,9 +38,33 @@ public interface FastXmlParser {
     int TEXT = 6;
 
     /**
-     * get current event that has already checked
-     * @return event type
+     * Set input bytes, and set set charset if no charset specified in document.
+     *
+     * @param bytes   byte array need to be parsed
+     * @param charset if param charset is null, then encoding in document will be used;
+     *                if both param charset and encoding in document is empty, then AbstractFastXmlParser.defaultCharset will be used
      * @throws ParseException
+     */
+    void setInput(byte[] bytes, Charset charset) throws ParseException;
+
+    /**
+     * get the whole document bytes
+     *
+     * @return
+     */
+    byte[] getDocument();
+
+    /**
+     * get the current offset of document bytes
+     *
+     * @return
+     */
+    int getCursor();
+
+    /**
+     * get current event that has already checked
+     *
+     * @return event type
      */
     int getCurrentEvent();
 
@@ -55,6 +79,7 @@ public interface FastXmlParser {
      * get next event before next() method called. You can call this method without worry it
      * This method will directly return the next event which has parsed in perv next() method,
      * and will not parse bytes
+     *
      * @return event type
      */
     int getNextEvent();
@@ -82,20 +107,6 @@ public interface FastXmlParser {
      * @return current depth
      */
     int getDepth();
-
-    /**
-     * get current row No
-     *
-     * @return current row No
-     */
-    int getRow();
-
-    /**
-     * get current column No
-     *
-     * @return current column No
-     */
-    int getColumn();
 
     /**
      * check the current bytes is the same with expectBytes
@@ -162,10 +173,9 @@ public interface FastXmlParser {
     /**
      * get the current string with decoding bytes if you need
      *
-     * @param needDecode if some characters in current string are not ascii
      * @return readable string or zero if no bytes
      */
-    String getString(boolean needDecode) throws ParseException;
+    String getStringWithDecoding() throws ParseException;
 
     /**
      * get the current string with any leading and trailing whitespace removed, by converting byte to char one by one

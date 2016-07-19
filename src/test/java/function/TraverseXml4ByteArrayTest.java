@@ -15,10 +15,9 @@
  */
 package function;
 
-import junit.framework.TestCase;
-import org.fastxml.FastXmlFactory;
-import org.fastxml.FastXmlParser;
-import org.fastxml.exception.ParseException;
+import com.github.fastxml.FastXmlFactory;
+import com.github.fastxml.FastXmlParser;
+import com.github.fastxml.exception.ParseException;
 import org.junit.Test;
 import util.FileLoaderUtils;
 
@@ -83,7 +82,7 @@ public class TraverseXml4ByteArrayTest {
                     default:
                         event = "";
                 }
-                System.out.println("[" + event + "]: " + parser.getString(true));
+                System.out.println("[" + event + "]: " + parser.getStringWithDecoding());
             }
         }
 

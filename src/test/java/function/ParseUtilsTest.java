@@ -15,10 +15,9 @@
  */
 package function;
 
-import junit.framework.TestCase;
-import org.fastxml.exception.NumberFormatException;
-import org.fastxml.exception.ParseException;
-import org.fastxml.util.ParseUtils;
+import com.github.fastxml.exception.NumberFormatException;
+import com.github.fastxml.exception.ParseException;
+import com.github.fastxml.util.ParseUtils;
 import org.junit.Assert;
 import org.junit.Test;
 

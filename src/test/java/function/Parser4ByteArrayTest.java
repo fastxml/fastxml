@@ -15,10 +15,10 @@
  */
 package function;
 
-import org.fastxml.FastXmlFactory;
-import org.fastxml.FastXmlParser;
-import org.fastxml.exception.NumberFormatException;
-import org.fastxml.exception.ParseException;
+import com.github.fastxml.FastXmlFactory;
+import com.github.fastxml.FastXmlParser;
+import com.github.fastxml.exception.NumberFormatException;
+import com.github.fastxml.exception.ParseException;
 import org.junit.Assert;
 import org.junit.Test;
 import util.FileLoaderUtils;
@@ -105,6 +105,7 @@ public class Parser4ByteArrayTest {
 
     /**
      * parse text to number
+     *
      * @throws IOException
      * @throws ParseException
      * @throws NumberFormatException
@@ -128,6 +129,7 @@ public class Parser4ByteArrayTest {
 
     /**
      * parse bytes to string
+     *
      * @throws IOException
      * @throws ParseException
      * @throws NumberFormatException
@@ -147,36 +149,36 @@ public class Parser4ByteArrayTest {
         for (int event = parser.next(); event != FastXmlParser.END_DOCUMENT; event = parser.next()) {
             if (event == FastXmlParser.TEXT) { // text content
                 if (parser.isMatch(name1)) {
-                    Assert.assertEquals("汤姆克鲁兹", parser.getString(true));
+                    Assert.assertEquals("汤姆克鲁兹", parser.getStringWithDecoding());
                 } else if (parser.isMatch(name2)) {
                     Assert.assertEquals("weager", parser.getString());
                 }
-            }else if(event == FastXmlParser.END_TAG_WITHOUT_TEXT){ // tagName
+            } else if (event == FastXmlParser.END_TAG_WITHOUT_TEXT) { // tagName
                 Assert.assertEquals("name", parser.getString());
             }
-            if(parser.getNextEvent() == FastXmlParser.ATTRIBUTE_NAME){ // tagName
+            if (parser.getNextEvent() == FastXmlParser.ATTRIBUTE_NAME) { // tagName
                 String tagName = parser.getString();
                 parser.next();
-                if(parser.isMatch(sex)){
+                if (parser.isMatch(sex)) {
                     Assert.assertEquals("package", tagName);
                     parser.next();
                     Assert.assertEquals("male", parser.getString());
                 }
 
             }
-            if(parser.getCurrentEvent() == FastXmlParser.ATTRIBUTE_NAME && parser.isMatch(age)){
+            if (parser.getCurrentEvent() == FastXmlParser.ATTRIBUTE_NAME && parser.isMatch(age)) {
                 parser.next();
                 Assert.assertEquals(null, parser.getString());
             }
-            if(parser.getCurrentEvent() == FastXmlParser.ATTRIBUTE_NAME && parser.isMatch(hasEntityReference)){
+            if (parser.getCurrentEvent() == FastXmlParser.ATTRIBUTE_NAME && parser.isMatch(hasEntityReference)) {
                 parser.next(); // move to attribute value
-                if(parser.isMatch(TRUE)) {
+                if (parser.isMatch(TRUE)) {
                     parser.next(); // move to text
-                    Assert.assertEquals("  汤姆克鲁兹-&côté &amp;c&#244;t&#233;  ", parser.getString(true));
+                    Assert.assertEquals("  汤姆克鲁兹-&côté &amp;c&#244;t&#233;  ", parser.getStringWithDecoding());
                     Assert.assertEquals("汤姆克鲁兹-&côté &amp;c&#244;t&#233;  ", parser.getTrimedString(true));
-                }else if(parser.isMatch(FALSE)){
+                } else if (parser.isMatch(FALSE)) {
                     parser.next();
-                    Assert.assertEquals("weager", parser.getString(true));
+                    Assert.assertEquals("weager", parser.getStringWithDecoding());
                 }
             }
         }
