@@ -177,18 +177,4 @@ public interface FastXmlParser {
      */
     String getStringWithDecoding() throws ParseException;
 
-    /**
-     * get the current string with any leading and trailing whitespace removed, by converting byte to char one by one
-     *
-     * @return readable string or zero if no bytes
-     */
-    String getTrimedString() throws ParseException;
-
-    /**
-     * get the current string with any leading and trailing whitespace removed, and with decoding bytes if you need
-     *
-     * @param needDecode if some characters in current string are not ascii
-     * @return readable string or zero if no bytes
-     */
-    String getTrimedString(boolean needDecode) throws ParseException;
 }

@@ -23,7 +23,7 @@ public class ByteUtils {
     /**
      * to valid a char.
      * <li>1st bit: tagName\attribute name char</li>
-     * <li>2st bit: useless char, such as whitespace\tab\return</li>
+     * <li>2st bit: useless char, such as whitespace\tab\return\newline</li>
      */
     public final static byte[] byteType = {
             0, // 0
@@ -64,24 +64,14 @@ public class ByteUtils {
      * @return true if valid, otherwise false
      */
     public static boolean isValidTokenChar(byte b) {
-        // to see validChars
+        // to check validChars
         return b >= 0 && b <= 122 && (byteType[b] & 1) > 0;
 //        return b > 0 && ((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || (b >= '0' && b <= '9')
 //                || b == ':' || b == '-' || b == '_' || b == '.');
     }
 
     /**
-     * check whether the byte is not a char of tag name and attribute name.
-     *
-     * @param b a byte to be valid
-     * @return false if valid, otherwise true
-     */
-    public static boolean isNotValidTokenChar(byte b) {
-        return !isValidTokenChar(b);
-    }
-
-    /**
-     * check wherther the byte is ' ' or '\t' or '\r' or '\n'
+     * check whether the byte is ' ' or '\t' or '\r' or '\n'
      *
      * @param b a byte to be valid
      * @return

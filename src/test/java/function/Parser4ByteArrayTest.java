@@ -175,7 +175,6 @@ public class Parser4ByteArrayTest {
                 if (parser.isMatch(TRUE)) {
                     parser.next(); // move to text
                     Assert.assertEquals("  汤姆克鲁兹-&côté &amp;c&#244;t&#233;  ", parser.getStringWithDecoding());
-                    Assert.assertEquals("汤姆克鲁兹-&côté &amp;c&#244;t&#233;  ", parser.getTrimedString(true));
                 } else if (parser.isMatch(FALSE)) {
                     parser.next();
                     Assert.assertEquals("weager", parser.getStringWithDecoding());

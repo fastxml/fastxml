@@ -104,7 +104,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return next event
      * @throws ParseException
      */
-    protected int processStartDocument() throws ParseException {
+    private int processStartDocument() throws ParseException {
         skipUselessChar();
         if (docBytes[cursor] == '<') {
             if (docBytes[cursor + 1] == '?'
@@ -118,6 +118,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                     for (; cursor < docBytesLength; moveCursor(1)) {
                         if (docBytes[cursor] == '?' && docBytes[cursor + 1] == '>') {
                             moveCursor(2);
+                            skipUselessChar();
                             return START_TAG;
                         }
                     }
@@ -186,7 +187,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                     }
                     throw ParseException.formatError("xml declaration is not closed correctly", this);
                 }
-            } else {
+            } else { // no declaration
                 moveCursor(1);
                 return START_TAG; // next event: start tag
             }
@@ -201,23 +202,26 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return next event
      * @throws ParseException
      */
-    protected int processStartTag() throws ParseException {
+    private int processStartTag() throws ParseException {
         // the first char has bean validated in previous event, so just skip it.
         // to see: processAfterEndTag() and processStartDocument()
         for (; cursor < docBytesLength; moveCursor(1)) {
-            if (ByteUtils.isNotValidTokenChar(docBytes[cursor])) {
+            if (!ByteUtils.isValidTokenChar(docBytes[cursor])) {
                 if (docBytes[cursor] == '>') { // start tag
                     currentBytesLength = cursor - currentIndex;
+                    moveCursor(1);
                     return processAfterStartTag();
                 } else {
                     int skipCharCount = skipUselessChar();
+                    // tagName should not contain whitespace
                     currentBytesLength = cursor - skipCharCount - currentIndex;
-                    if (docBytes[cursor] == '/' && docBytes[cursor + 1] == '>') { // tag end immediately
+                    if (docBytes[cursor] == '/') { // tag end immediately
+                        moveCursor(1);
                         return END_TAG_WITHOUT_TEXT;
                     } else if (skipCharCount > 0) { // found attribute name
                         return ATTRIBUTE_NAME;
                     } else {
-                        throw ParseException.formatError("should be '>' or attribute here", this);
+                        throw ParseException.formatError("should be '/' or attribute here", this);
                     }
                 }
             }
@@ -231,25 +235,17 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return next event
      * @throws ParseException
      */
-    protected int processEndTag() throws ParseException {
-        if (docBytes[cursor] == '<' && docBytes[cursor + 1] == '/') {
-            moveCursor(2);
-            resetCurrent();
-            for (; cursor < docBytesLength; moveCursor(1)) {
-                if (docBytes[cursor] == '>') {// the tag end
-                    currentBytesLength = cursor - currentIndex;
-                    moveCursor(1);
-                    if (cursor == docBytesLength) {
-                        return END_DOCUMENT;
-                    } else {
-                        return processAfterEndTag();
-                    }
-                } else if (ByteUtils.isNotValidTokenChar(docBytes[cursor])) {
-                    throw ParseException.formatError("tag name should not contain invalid char", this);
-                }
+    private int processEndTag() throws ParseException {
+        for (; cursor < docBytesLength; moveCursor(1)) {
+            if (docBytes[cursor] == '>') {// the tag end
+                currentBytesLength = cursor - currentIndex;
+                moveCursor(1);
+                return processAfterEndTag();
+            } else if (!ByteUtils.isValidTokenChar(docBytes[cursor])) {
+                throw ParseException.formatError("tag name should not contain invalid char", this);
             }
         }
-        throw ParseException.formatError("need '</tagName' here", this);
+        throw ParseException.documentEndUnexpected(this);
     }
 
     /**
@@ -258,9 +254,9 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return next event
      * @throws ParseException
      */
-    protected int processEndTagWithoutText() throws ParseException {
-        if (docBytes[cursor] == '/' && docBytes[cursor + 1] == '>') {
-            moveCursor(2);
+    private int processEndTagWithoutText() throws ParseException {
+        if (docBytes[cursor] == '>') {
+            moveCursor(1);
             return processAfterEndTag();
         } else {
             throw ParseException.tagNotClosed(this);
@@ -277,27 +273,22 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return next event
      * @throws ParseException
      */
-    protected int processAfterStartTag() throws ParseException {
-        moveCursor(1);
+    private int processAfterStartTag() throws ParseException {
         int tempCursor = cursor;
         skipUselessChar();
-        // continue to find out next event: text or another start tag
+        // continue to find out next event: another start tag or end tag or text
         if (docBytes[cursor] == '<') {
-            byte cursorByte = docBytes[cursor + 1];
-            if (ByteUtils.isValidTokenChar(cursorByte)) { // another start tag
-                moveCursor(1);
+            byte nextByte = docBytes[cursor + 1];
+            if (ByteUtils.isValidTokenChar(nextByte)) { // found out another start tag
+                moveCursor(1); // skip "<"
                 return START_TAG;
-            } else if (cursorByte == '/') { // found out end tag
+            } else if (nextByte == '/') { // found out end tag
+                moveCursor(2); // skip "</"
                 return END_TAG;
-            } else if (cursorByte == '!' && docBytes[cursor + 2] == '['
-                    && docBytes[cursor + 3] == 'C' && docBytes[cursor + 4] == 'D'
-                    && docBytes[cursor + 5] == 'A' && docBytes[cursor + 6] == 'T'
-                    && docBytes[cursor + 7] == 'A' && docBytes[cursor + 8] == '[') {
+            } else { // so it should be text
                 // restore
                 cursor = tempCursor;
                 return TEXT;
-            } else {
-                throw ParseException.formatError("should be </EndTagName> or <StartTagName", this);
             }
         } else {
             // restore
@@ -316,19 +307,18 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return next event
      * @throws ParseException
      */
-    protected int processAfterEndTag() throws ParseException {
+    private int processAfterEndTag() throws ParseException {
         skipUselessChar();
-        // continue to find out next event
+        // continue to find out next event: end tag or another start tag
         if (cursor == docBytesLength) {
             return END_DOCUMENT;
         } else if (docBytes[cursor] == '<') {
             if (docBytes[cursor + 1] == '/') { // found another end tag
+                moveCursor(2); // skip "</"
                 return END_TAG;
-            } else if (ByteUtils.isValidTokenChar(docBytes[cursor + 1])) { // found a start tag
+            } else { // found a start tag
                 moveCursor(1);
                 return START_TAG;
-            } else {
-                throw ParseException.formatError("need '</tagName>' or '<tagName' here", this);
             }
         } else {
             throw ParseException.formatError("need a start tag or end document here", this);
@@ -341,9 +331,10 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return next event
      * @throws ParseException
      */
-    protected int processAttributeName() throws ParseException {
+    private int processAttributeName() throws ParseException {
+        moveCursor(1); // the first char has been checked in previous event, so here just skip it
         for (; cursor < docBytesLength; moveCursor(1)) {// read tag bytes
-            if (ByteUtils.isNotValidTokenChar(docBytes[cursor])) {// this attribute name end
+            if (!ByteUtils.isValidTokenChar(docBytes[cursor])) {// this attribute name end
                 currentBytesLength = cursor - currentIndex;
                 skipUselessChar(); // skip ' ' and '\t' between attribute name and '='
                 // read "=\"", '\'' should be ok
@@ -370,7 +361,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return next event
      * @throws ParseException
      */
-    protected int processAttributeValue() throws ParseException {
+    private int processAttributeValue() throws ParseException {
         // check doubleQuote or singleQuote
         currentInDoubleQuote = docBytes[cursor - 1] == '\"';
         for (; cursor < docBytesLength; moveCursor(1)) {
@@ -384,8 +375,10 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                 if (ByteUtils.isValidTokenChar(cursorByte)) {// next attributeName
                     return ATTRIBUTE_NAME;
                 } else if (cursorByte == '>') { // the start tag
+                    moveCursor(1);
                     return processAfterStartTag();
-                } else if (cursorByte == '/' && cursor + 1 < docBytesLength && docBytes[cursor + 1] == '>') {// found end tag
+                } else if (cursorByte == '/') {// found end tag
+                    moveCursor(1);
                     return END_TAG_WITHOUT_TEXT;
                 } else {
                     throw ParseException.formatError("should be space or '>' or '/>' or another attribute here", this);
@@ -405,7 +398,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return next event
      * @throws ParseException
      */
-    protected int processText() throws ParseException {
+    private int processText() throws ParseException {
         boolean inCDATA = false;
         for (; cursor < docBytesLength; moveCursor(1)) {
             if (inCDATA) { // in CDATA block, then find out "]]>"
@@ -415,14 +408,15 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                 }
             } else { // not in CDATA block
                 if (docBytes[cursor] == '<') {
-                    if (docBytes[cursor + 1] == '!' && docBytes[cursor + 2] == '['
-                            && docBytes[cursor + 3] == 'C' && docBytes[cursor + 4] == 'D'
-                            && docBytes[cursor + 5] == 'A' && docBytes[cursor + 6] == 'T'
-                            && docBytes[cursor + 7] == 'A' && docBytes[cursor + 8] == '[') { // CDATA block
+                    byte nextByte = docBytes[cursor + 1];
+                    if (nextByte == '!' && docBytes[cursor + 2] == '[' && docBytes[cursor + 3] == 'C'
+                            && docBytes[cursor + 4] == 'D' && docBytes[cursor + 5] == 'A' && docBytes[cursor + 6] == 'T'
+                            && docBytes[cursor + 7] == 'A' && docBytes[cursor + 8] == '[') { // found CDATA block
                         moveCursor(8);
                         inCDATA = true;
-                    } else {
+                    } else if (nextByte == '/') { // found end tag
                         currentBytesLength = cursor - currentIndex;
+                        moveCursor(2); // skip "</"
                         return END_TAG;
                     }
                 } else if (docBytes[cursor] == '&') { // text content contains entity reference
@@ -439,28 +433,38 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @return count of useless chars
      * @throws ParseException
      */
-    protected int skipUselessChar() throws ParseException {
+    private int skipUselessChar() throws ParseException {
         int beginIndex = cursor;
         for (; cursor < docBytesLength; moveCursor(1)) {
             byte cursorByte = docBytes[cursor];
             if (ByteUtils.isWhiteSpaceOrNewLine(cursorByte)) { // found useless character: ' ','\t','\r','\n'
                 // continue
-            } else if (cursorByte == '<' && cursor + 3 < docBytesLength
-                    && docBytes[cursor + 1] == '!' && docBytes[cursor + 2] == '-' && docBytes[cursor + 3] == '-') { // found comment
-                skipComment();
-                // continue
-            } else if (cursorByte == '<' && cursor + 8 < docBytesLength
-                    && docBytes[cursor + 1] == '!' && docBytes[cursor + 2] == 'D'
-                    && docBytes[cursor + 3] == 'O' && docBytes[cursor + 4] == 'C'
-                    && docBytes[cursor + 5] == 'T' && docBytes[cursor + 6] == 'Y'
-                    && docBytes[cursor + 7] == 'P' && docBytes[cursor + 8] == 'E') { // found DTD DOCTYPE
-                skipDocType();
-                // continue
+            } else if (cursorByte == '<' && docBytes[cursor + 1] == '!') {
+                skipOtherUselessChar();
             } else { // found valid char
                 break;
             }
         }
         return cursor - beginIndex;
+    }
+
+    /**
+     * skip comment and DTA DOCTYPE
+     *
+     * @throws ParseException
+     */
+    private void skipOtherUselessChar() throws ParseException {
+        if (docBytes[cursor + 2] == '-' && docBytes[cursor + 3] == '-') { // found comment
+            moveCursor(4); // skip "<!--"
+            skipComment();
+            // continue
+        } else if (docBytes[cursor + 2] == 'D' && docBytes[cursor + 3] == 'O' && docBytes[cursor + 4] == 'C'
+                && docBytes[cursor + 5] == 'T' && docBytes[cursor + 6] == 'Y' && docBytes[cursor + 7] == 'P'
+                && docBytes[cursor + 8] == 'E') { // found DTD DOCTYPE
+            moveCursor(8); // skip "<!DOCTYPE"
+            skipDocType();
+            // continue
+        }
     }
 
     /**
@@ -478,8 +482,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      *
      * @throws ParseException
      */
-    protected void skipDocType() throws ParseException {
-        moveCursor(8); // skip "<!DOCTYPE"
+    private void skipDocType() throws ParseException {
         boolean docTypeDefineInDoc = false;
         for (; cursor < docBytesLength; moveCursor(1)) {
             if (!docTypeDefineInDoc && docBytes[cursor] == '[') { // DTD DOCTYPE defined in document
@@ -505,12 +508,10 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      *
      * @throws ParseException
      */
-    protected void skipComment() throws ParseException {
-        moveCursor(4); // skip "<!--"
+    private void skipComment() throws ParseException {
         for (; cursor < docBytesLength; moveCursor(1)) {
             int endIndexOfComment = cursor + 2;
-            if (docBytes[cursor] == '-' && endIndexOfComment < docBytesLength
-                    && docBytes[cursor + 1] == '-' && docBytes[endIndexOfComment] == '>') { // comment end
+            if (docBytes[cursor] == '-' && docBytes[cursor + 1] == '-' && docBytes[cursor + 2] == '>') { // comment end
                 moveCursor(2); // skip "-->"
                 return;
             }
@@ -536,12 +537,12 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     /**
      * reset currentIndex and currentBytesLength when traverse to another element
      */
-    protected void resetCurrent() {
+    private void resetCurrent() {
         currentIndex = cursor;
         currentBytesLength = 0;
     }
 
-    protected void moveCursor(int count) {
+    private void moveCursor(int count) {
         cursor += count;
     }
 
@@ -575,7 +576,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     public String getString() throws ParseException {
 
         try {
-            return ParseUtils.parseString(docBytes, currentIndex, currentBytesLength, currentHasEntityReference);
+            return ParseUtils.parseString(docBytes, currentIndex, currentBytesLength);
         } catch (ParseException e) {
             e.setRowAndColumn(this);
             throw e;
@@ -584,30 +585,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
 
     public String getStringWithDecoding() throws ParseException {
         try {
-            return ParseUtils.parseString(docBytes, currentIndex, currentBytesLength, charset, currentHasEntityReference);
-        } catch (ParseException e) {
-            e.setRowAndColumn(this);
-            throw e;
-        }
-    }
-
-    public String getTrimedString() throws ParseException {
-
-        try {
-            return ParseUtils.parseTrimedString(docBytes, currentIndex, currentBytesLength, currentHasEntityReference);
-        } catch (ParseException e) {
-            e.setRowAndColumn(this);
-            throw e;
-        }
-    }
-
-    public String getTrimedString(boolean needDecode) throws ParseException {
-        try {
-            if (needDecode) {
-                return ParseUtils.parseTrimedString(docBytes, currentIndex, currentBytesLength, charset, currentHasEntityReference);
-            } else {
-                return getString();
-            }
+            return ParseUtils.parseStringWithDecoding(docBytes, currentIndex, currentBytesLength, charset);
         } catch (ParseException e) {
             e.setRowAndColumn(this);
             throw e;
@@ -616,7 +594,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
 
     public short getShort() throws NumberFormatException {
         try {
-            return ParseUtils.parseShort(docBytes, currentIndex, currentBytesLength);
+            return (short) ParseUtils.parseInt(docBytes, currentIndex, currentBytesLength);
         } catch (NumberFormatException e) {
             e.setRowAndColumn(this);
             throw e;
