@@ -39,6 +39,7 @@ public class TraverseXml4ByteArrayTest {
         traverseXml("order.xml", printInfo);
         traverseXml("soap.xml", printInfo);
         traverseXml("test1.xml", printInfo);
+        traverseXml("test1-gbk.xml", printInfo);
         traverseXml("test2.xml", printInfo);
     }
 

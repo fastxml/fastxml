@@ -401,13 +401,14 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     private int processText() throws ParseException {
         boolean inCDATA = false;
         for (; cursor < docBytesLength; moveCursor(1)) {
+            byte currentCursor = docBytes[cursor];
             if (inCDATA) { // in CDATA block, then find out "]]>"
-                if (docBytes[cursor] == ']' && docBytes[cursor + 1] == ']' && docBytes[cursor + 2] == '>') {
+                if (currentCursor == ']' && docBytes[cursor + 1] == ']' && docBytes[cursor + 2] == '>') {
                     moveCursor(2);
                     inCDATA = false;
                 }
             } else { // not in CDATA block
-                if (docBytes[cursor] == '<') {
+                if (currentCursor == '<') {
                     byte nextByte = docBytes[cursor + 1];
                     if (nextByte == '!' && docBytes[cursor + 2] == '[' && docBytes[cursor + 3] == 'C'
                             && docBytes[cursor + 4] == 'D' && docBytes[cursor + 5] == 'A' && docBytes[cursor + 6] == 'T'
@@ -419,7 +420,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                         moveCursor(2); // skip "</"
                         return END_TAG;
                     }
-                } else if (docBytes[cursor] == '&') { // text content contains entity reference
+                } else if (currentCursor == '&') { // text content contains entity reference
                     currentHasEntityReference = true;
                 }
             }

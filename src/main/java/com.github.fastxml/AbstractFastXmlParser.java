@@ -83,15 +83,15 @@ public abstract class AbstractFastXmlParser implements FastXmlParser {
         return this.docBytes;
     }
 
-    public int getCursor() {
+    public final int getCursor() {
         return this.cursor;
     }
 
-    public int getCurrentEvent() {
+    public final int getCurrentEvent() {
         return this.currentEvent;
     }
 
-    public int getNextEvent() {
+    public final int getNextEvent() {
         return this.nextEvent;
     }
 }

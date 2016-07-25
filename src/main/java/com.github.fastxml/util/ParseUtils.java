@@ -34,8 +34,8 @@ public class ParseUtils {
      * @return string parse from bytes. if the length of string is 0, then return null
      */
     public final static String parseString(final byte[] bytes, int begin, int length) throws ParseException {
-        int last = begin + length;
-        FastStringBuilder sb = new FastStringBuilder(length);
+        final int last = begin + length;
+        final FastStringBuilder sb = new FastStringBuilder(length);
         for (; begin < last; begin++) { // found CDATA block
             if (bytes[begin] == '<' && bytes[begin + 1] == '!' && bytes[begin + 2] == '['
                     && bytes[begin + 3] == 'C' && bytes[begin + 4] == 'D' && bytes[begin + 5] == 'A'
@@ -51,7 +51,7 @@ public class ParseUtils {
         return sb.length() == 0 ? null : sb.toString();
     }
 
-    private final static int parseCDATA4Byte(final byte[] bytes, int begin, int last, FastStringBuilder sb) throws ParseException {
+    private final static int parseCDATA4Byte(final byte[] bytes, int begin, final int last, final FastStringBuilder sb) throws ParseException {
         for (; begin < last; begin++) {
             if (bytes[begin] == ']' && bytes[begin + 1] == ']' && bytes[begin + 2] == '>') {
                 begin += 2;
@@ -63,7 +63,7 @@ public class ParseUtils {
         throw ParseException.formatError("CDATA is not closed");
     }
 
-    private final static int parseEntityReference4Byte(final byte[] bytes, int begin, int last, FastStringBuilder sb) throws ParseException {
+    private final static int parseEntityReference4Byte(final byte[] bytes, int begin, final int last, final FastStringBuilder sb) throws ParseException {
 
         for (; begin < last; begin++) {
             byte b = bytes[begin];
@@ -148,11 +148,11 @@ public class ParseUtils {
     }
 
 
-    public final static String parseStringWithDecoding(final byte[] bytes, int begin, int length, Charset charset) throws ParseException {
-        String strNeedDecoding = new String(bytes, begin, length, charset);
-        char[] chars = strNeedDecoding.toCharArray();
-        int last = chars.length;
-        FastStringBuilder sb = new FastStringBuilder(length);
+    public final static String parseStringWithDecoding(final byte[] bytes, final int begin, final int length, final Charset charset) throws ParseException {
+        final String strNeedDecoding = new String(bytes, begin, length, charset);
+        final char[] chars = strNeedDecoding.toCharArray();
+        final int last = chars.length;
+        final FastStringBuilder sb = new FastStringBuilder(length);
         for (int i = 0; i < last; i++) { // found CDATA block
             if (chars[i] == '<' && chars[i + 1] == '!' && chars[i + 2] == '['
                     && chars[i + 3] == 'C' && chars[i + 4] == 'D' && chars[i + 5] == 'A'
@@ -168,7 +168,7 @@ public class ParseUtils {
         return sb.length() == 0 ? null : sb.toString();
     }
 
-    private final static int parseCDATA4String(final char[] chars, int begin, int last, FastStringBuilder sb) throws ParseException {
+    private final static int parseCDATA4String(final char[] chars, int begin, final int last, final FastStringBuilder sb) throws ParseException {
         for (; begin < last; begin++) {
             if (chars[begin] == ']' && chars[begin + 1] == ']' && chars[begin + 2] == '>') {
                 begin += 2;
@@ -180,7 +180,7 @@ public class ParseUtils {
         throw ParseException.formatError("CDATA is not closed");
     }
 
-    private final static int parseEntityReference4String(final char[] chars, int begin, int last, FastStringBuilder sb) throws ParseException {
+    private final static int parseEntityReference4String(final char[] chars, int begin, final int last, final FastStringBuilder sb) throws ParseException {
 
         for (; begin < last; begin++) {
             char b = chars[begin];
@@ -274,7 +274,7 @@ public class ParseUtils {
      * @return integer number parsed from bytes
      * @throws NumberFormatException
      */
-    public final static int parseInt(final byte[] bytes, int begin, int length) throws NumberFormatException {
+    public final static int parseInt(final byte[] bytes, int begin, final int length) throws NumberFormatException {
         int result = 0;
         boolean negative = false;
         int i = 0;
@@ -328,7 +328,7 @@ public class ParseUtils {
      * @return long number parsed from bytes
      * @throws NumberFormatException
      */
-    public final static long parseLong(final byte[] bytes, int begin, int length) throws NumberFormatException {
+    public final static long parseLong(final byte[] bytes, int begin, final int length) throws NumberFormatException {
         long result = 0;
         boolean negative = false;
         int i = 0;
@@ -382,7 +382,7 @@ public class ParseUtils {
      * @return float number parsed from bytes
      * @throws NumberFormatException
      */
-    public final static float parseFloat(final byte[] bytes, int begin, int length) throws NumberFormatException {
+    public final static float parseFloat(final byte[] bytes, final int begin, final int length) throws NumberFormatException {
         try {
             return Float.parseFloat(parseString(bytes, begin, length));
         } catch (Exception e) {
@@ -399,7 +399,7 @@ public class ParseUtils {
      * @return double number parsed from bytes
      * @throws NumberFormatException
      */
-    public final static double parseDouble(final byte[] bytes, int begin, int length) throws NumberFormatException {
+    public final static double parseDouble(final byte[] bytes, final int begin, final int length) throws NumberFormatException {
         try {
             return Double.parseDouble(parseString(bytes, begin, length));
         } catch (Exception e) {
@@ -415,9 +415,9 @@ public class ParseUtils {
      * @param length the length of bytes need to be parsed, should > 0
      * @return string parse from bytes
      */
-    final static String toString(final byte[] bytes, int begin, int length) {
+    final static String toString(final byte[] bytes, int begin, final int length) {
         int last = begin + length;
-        FastStringBuilder sb = new FastStringBuilder(length);
+        final FastStringBuilder sb = new FastStringBuilder(length);
         for (; begin < last; begin++) {
             sb.append(bytes[begin]);
         }
