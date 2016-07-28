@@ -31,7 +31,7 @@ import java.nio.charset.Charset;
  * Notice:
  * <li>1. Text content should not contain comments.</li>
  * <li>2. TagName should not contain white space, tab or newline</li>
- * <li>3. both tag name and attribute name only contain ascii chars.</li>
+ * <li>3. both tag name and attribute name only contain ascii chars: number,alphabet,'-','_',':','.'</li>
  * Created by weager on 2016/06/07.
  */
 public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
@@ -115,14 +115,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                 skipUselessChar();
 
                 if (charset != null) {// if charset has been set, then just finish declaration.
-                    for (; cursor < docBytesLength; moveCursor(1)) {
-                        if (docBytes[cursor] == '?' && docBytes[cursor + 1] == '>') {
-                            moveCursor(2);
-                            skipUselessChar();
-                            return START_TAG;
-                        }
-                    }
-                    throw ParseException.documentEndUnexpected(this);
+                    return processEndDeclaration();
                 } else { // charset has not been set, then find out encoding
                     for (; cursor < docBytesLength; moveCursor(1)) {
                         if ((docBytes[cursor] == 'e' || docBytes[cursor] == 'E')
@@ -138,33 +131,11 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                             if (docBytes[cursor] == '=') {
                                 moveCursor(1);
                                 skipUselessChar();
-                                if (docBytes[cursor] == '\"' || docBytes[cursor] == '\'') {
-                                    currentInDoubleQuote = docBytes[cursor] == '\"';
+                                byte currentCursor = docBytes[cursor];
+                                if (currentCursor == '\"' || currentCursor == '\'') {
                                     moveCursor(1);
-                                    currentIndex = cursor;
-                                    for (; cursor < docBytesLength; moveCursor(1)) {
-                                        if ((currentInDoubleQuote && docBytes[cursor] == '\"')
-                                                || (!currentInDoubleQuote && docBytes[cursor] == '\'')) { // found the end quote
-                                            currentBytesLength = cursor - currentIndex;
-                                            String charsetString;
-                                            try {
-                                                charsetString = this.getString();
-                                            } catch (ParseException e) {
-                                                charsetString = null;
-                                            }
-                                            if (charsetString != null) {
-                                                try {
-                                                    charset = Charset.forName(charsetString);
-                                                } catch (Exception e) {
-                                                    throw ParseException.formatError("encoding is not found or charset is not correct", this);
-                                                }
-                                            }
-                                            if (charset == null) {
-                                                throw ParseException.formatError("encoding is not found or charset is not correct", this);
-                                            }
-                                            break;
-                                        }
-                                    }
+                                    processEncodingValue(); // parse encoding="xxx"
+                                    return processEndDeclaration();
                                 } else {
                                     throw ParseException.formatError("need '\"' or '\'' here", this);
                                 }
@@ -174,26 +145,81 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                         } else if (docBytes[cursor] == '?' && docBytes[cursor + 1] == '>') {
                             moveCursor(2);
                             skipUselessChar();
-                            if (charset == null) {
-                                charset = DEFAULT_CHARSET;
-                            }
-                            if (docBytes[cursor] == '<') {
-                                moveCursor(1);
-                                return START_TAG;
-                            } else {
-                                throw ParseException.formatError("should be a <tagName here", this);
-                            }
+                            return _processEndDeclaration();
                         }
                     }
-                    throw ParseException.formatError("xml declaration is not closed correctly", this);
+                    throw ParseException.formatError("xml declaration should contain encoding, or specify charset on method setInput(byte[], Charset)", this);
                 }
-            } else { // no declaration
+            } else { // no declaration, no specified charset, so use the default charset, next event should be START_TAG
                 moveCursor(1);
+                if (charset == null) {
+                    charset = DEFAULT_CHARSET;
+                }
                 return START_TAG; // next event: start tag
             }
         } else {
             throw ParseException.formatError("document should begin with '<'", this);
         }
+    }
+
+    /**
+     * process end of declaration at the beginning of the document
+     *
+     * @return next event
+     * @throws ParseException
+     */
+    private int processEndDeclaration() throws ParseException {
+        for (; cursor < docBytesLength; moveCursor(1)) {
+            if (docBytes[cursor] == '?' && docBytes[cursor + 1] == '>') {
+                moveCursor(2);
+                skipUselessChar();
+                return _processEndDeclaration();
+            }
+        }
+        throw ParseException.documentEndUnexpected(this);
+    }
+
+    /**
+     * process end of declaration at the beginning of the document
+     *
+     * @return
+     * @throws ParseException
+     */
+    private int _processEndDeclaration() throws ParseException {
+        if (charset == null) {
+            charset = DEFAULT_CHARSET;
+        }
+        if (docBytes[cursor] == '<') {
+            moveCursor(1);
+            return START_TAG;
+        } else {
+            throw ParseException.formatError("should be a <tagName here", this);
+        }
+    }
+
+    /**
+     * process encoding value
+     *
+     * @throws ParseException
+     */
+    private void processEncodingValue() throws ParseException {
+        // check doubleQuote or singleQuote
+        currentInDoubleQuote = docBytes[cursor - 1] == '\"';
+        currentIndex = cursor;
+        for (; cursor < docBytesLength; moveCursor(1)) {
+            byte cursorByte = docBytes[cursor];
+            if ((currentInDoubleQuote && cursorByte == '\"') || (!currentInDoubleQuote && cursorByte == '\'')) {// found another quotation, it's the end of attribute value
+                currentBytesLength = cursor - currentIndex; // length of attribute value
+                try {
+                    charset = Charset.forName(this.getString());
+                } catch (Exception e) {
+                    throw ParseException.formatError("encoding is not found or charset is not correct", this);
+                }
+                moveCursor(1); // skip another '\'' or '\"'
+                return;
+            }
+        }
+        throw ParseException.formatError("need another quotation", this);
     }
 
     /**
