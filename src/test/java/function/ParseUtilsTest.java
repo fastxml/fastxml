@@ -125,6 +125,17 @@ public class ParseUtilsTest {
     }
 
     @Test
+    public void testParseDouble() throws NumberFormatException, ParseException {
+        byte[] testBytes = "127.22".getBytes();
+        Assert.assertEquals(127.22d, ParseUtils.parseDouble(testBytes, 0, testBytes.length), 0.00000000000001d);
+    }
+
+    public void testParseFloat() throws NumberFormatException, ParseException {
+        byte[] testBytes = "127.22".getBytes();
+        Assert.assertEquals(127.22f, ParseUtils.parseFloat(testBytes, 0, testBytes.length), 0.000000000000001f);
+    }
+
+    @Test
     public void testEntityReference() throws ParseException {
         byte[] testBytes = "&amp;c&#244;t&#233;".getBytes();
         Charset charset = Charset.forName("utf-8");
