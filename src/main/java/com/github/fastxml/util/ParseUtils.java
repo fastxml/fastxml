@@ -17,8 +17,6 @@ package com.github.fastxml.util;
 
 import com.github.fastxml.exception.NumberFormatException;
 import com.github.fastxml.exception.ParseException;
-import sun.misc.FloatingDecimal;
-
 import java.nio.charset.Charset;
 
 /**
@@ -386,7 +384,7 @@ public class ParseUtils {
      */
     public final static float parseFloat(final byte[] bytes, final int begin, final int length) throws NumberFormatException {
         try {
-            return FloatingDecimal.parseFloat(parseString(bytes, begin, length));
+            return Float.parseFloat(parseString(bytes, begin, length));
         } catch (Exception e) {
             throw NumberFormatException.formatException(e.getMessage(), e);
         }
@@ -403,7 +401,7 @@ public class ParseUtils {
      */
     public final static double parseDouble(final byte[] bytes, final int begin, final int length) throws NumberFormatException {
         try {
-            return FloatingDecimal.parseDouble(parseString(bytes, begin, length));
+            return Double.parseDouble(parseString(bytes, begin, length));
         } catch (Exception e) {
             throw NumberFormatException.formatException(e.getMessage(), e);
         }

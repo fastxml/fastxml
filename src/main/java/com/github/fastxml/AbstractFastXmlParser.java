@@ -94,4 +94,12 @@ public abstract class AbstractFastXmlParser implements FastXmlParser {
     public final int getNextEvent() {
         return this.nextEvent;
     }
+
+    public Charset getEncode() {
+        return charset;
+    }
+
+    public int getDepth() {
+        return currentDepth;
+    }
 }

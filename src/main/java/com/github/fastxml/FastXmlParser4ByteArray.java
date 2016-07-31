@@ -573,14 +573,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
         cursor += count;
     }
 
-    public Charset getEncode() {
-        return charset;
-    }
-
-    public int getDepth() {
-        return currentDepth;
-    }
-
     public boolean isMatch(byte[] expectBytes) {
         int length = expectBytes.length;
         if (expectBytes.length == currentBytesLength) {
