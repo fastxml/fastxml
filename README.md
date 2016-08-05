@@ -2,7 +2,7 @@
 
 **A simple, high-performance, small memory footprint, pull based XML parser.**
 
- * Very good performance, nearly 50% faster than VTD-XMl, 25% faster than XPP3/MXP1
+ * Very good performance, nearly three times faster than [VTD-XMl](http://vtd-xml.sourceforge.net), twice times faster than [XPP3/MXP1](http://www.extreme.indiana.edu/xgws/xsoap/xpp/mxp1/)
  * Very small memory footprint, save more memory than VTD-XML and XPP3/MXP1
  * No dependencies
  * Minimum size of jar(size:18K), great in J2ME environment
