@@ -35,7 +35,6 @@
  * FastXml focus on significant xml content. DECLARE, comments and DOCTYPE will be ignored.
  * Text content should not contain comments.
  * TagName should not contain white space, tab or newline
- * Attribute name should be close to '=', and '=' should be close to '\"'
  * Both tag name and attribute name can only contain ascii chars.
  * Namespace prefix is allowed, but no validation for namespace
 
