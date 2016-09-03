@@ -6,7 +6,7 @@
 
     <groupId>com.github.fastxml</groupId>
     <artifactId>fastxml</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0.beta</version>
     <packaging>jar</packaging>
     <name>com.github.fastxml:fastxml</name>
     <description>A simple, high-performance, small memory footprint, pull based XML parser</description>

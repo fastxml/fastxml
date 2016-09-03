@@ -17,6 +17,7 @@ package com.github.fastxml;
 
 import com.github.fastxml.exception.ParseException;
 
+import java.io.InputStream;
 import java.nio.charset.Charset;
 
 /**
@@ -31,9 +32,7 @@ public class FastXmlFactory {
      * @throws ParseException
      */
     public static FastXmlParser newInstance(byte[] docBytes) throws ParseException {
-        FastXmlParser4ByteArray parser = new FastXmlParser4ByteArray();
-        parser.setInput(docBytes, null);
-        return parser;
+        return newInstance(docBytes, null);
     }
 
     /**
@@ -49,6 +48,50 @@ public class FastXmlFactory {
         return parser;
     }
 
+    /**
+     * create FastXmlParser for input stream
+     * @param is input stream
+     * @return
+     * @throws ParseException
+     */
+    public static FastXmlParser newInstance(InputStream is) throws ParseException {
+        return newInstance(is, FastXmlParser4InputStream.DEFAULT_BUFFER_SIZE, null);
+    }
 
+    /**
+     * create FastXmlParser with charset
+     * @param is input stream
+     * @param charset if null, charset specified in document header will be used
+     * @return
+     * @throws ParseException
+     */
+    public static FastXmlParser newInstance(InputStream is, Charset charset) throws ParseException {
+        return newInstance(is, FastXmlParser4InputStream.DEFAULT_BUFFER_SIZE, charset);
+    }
+
+    /**
+     * create FastXmlParser with charset and buffer size
+     * @param is input stream
+     * @param bufferSize buffer size
+     * @return
+     * @throws ParseException
+     */
+    public static FastXmlParser newInstance(InputStream is, int bufferSize) throws ParseException {
+        return newInstance(is, bufferSize);
+    }
+
+    /**
+     * create FastXmlParser with charset and buffer size
+     * @param is input stream
+     * @param bufferSize buffer size
+     * @param charset if null, charset specified in document header will be used
+     * @return
+     * @throws ParseException
+     */
+    public static FastXmlParser newInstance(InputStream is, int bufferSize, Charset charset) throws ParseException {
+        FastXmlParser4InputStream parser = new FastXmlParser4InputStream();
+        parser.setInput(is, bufferSize, charset);
+        return parser;
+    }
 
 }

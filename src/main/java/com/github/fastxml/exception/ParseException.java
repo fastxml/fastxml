@@ -16,6 +16,10 @@
 package com.github.fastxml.exception;
 
 import com.github.fastxml.FastXmlParser;
+import com.github.fastxml.FastXmlParser4ByteArray;
+import com.github.fastxml.FastXmlParser4InputStream;
+
+import java.io.IOException;
 
 /**
  * Created by weager on 2016/06/07.
@@ -27,6 +31,10 @@ public class ParseException extends Exception {
 
     public ParseException(String message) {
         super(message);
+    }
+
+    public ParseException(Throwable cause) {
+        this(cause.getMessage(), cause);
     }
 
     public ParseException(String message, FastXmlParser parser) {
@@ -46,18 +54,24 @@ public class ParseException extends Exception {
         if (parser == null) {
             return;
         }
-        byte[] docBytes = parser.getDocument();
-        int length = docBytes.length;
-        row = 1;
-        int cursor = parser.getCursor();
-        int lastNewLine = 1;
-        for (int i = 0; i <= cursor; i++) {
-            if (docBytes[i] == '\n') {
-                row++;
-                lastNewLine = i;
+        if (parser instanceof FastXmlParser4ByteArray) {
+            byte[] docBytes = parser.getDocument();
+            int length = docBytes.length;
+            row = 1;
+            int cursor = parser.getCursor();
+            int lastNewLine = 1;
+            for (int i = 0; i <= cursor; i++) {
+                if (docBytes[i] == '\n') {
+                    row++;
+                    lastNewLine = i;
+                }
             }
+            column = cursor - lastNewLine;
+        } else {
+            FastXmlParser4InputStream parser4InputStream = (FastXmlParser4InputStream) parser;
+            row = parser4InputStream.getRow();
+            column = parser4InputStream.getColumn();
         }
-        column = cursor - lastNewLine;
     }
 
     @Override
@@ -99,6 +113,10 @@ public class ParseException extends Exception {
 
     public static ParseException formatError(String msg, FastXmlParser parser) {
         return new ParseException(msg, parser);
+    }
+
+    public static ParseException ioException(IOException e) {
+        return new ParseException(e);
     }
 
     public int getRow() {
