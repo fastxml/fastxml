@@ -26,6 +26,8 @@
    they are no significant for you most of the time.
  * Convert byte array segment to Integer\Long\Short directly,
    without convert byte array segment to String and then convert to Integer\Long\Short.
+ * Almost without creating temporary string or other object.
+ * Extreme JIT Optimization.
  * You can skip a whole tag element when traverse the xml document, if you need.
    This is very useful when you just want to read some tags from xml document.
 
