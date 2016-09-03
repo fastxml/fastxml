@@ -38,16 +38,6 @@ public interface FastXmlParser {
     int TEXT = 6;
 
     /**
-     * Set input bytes, and set set charset if no charset specified in document.
-     *
-     * @param bytes   byte array need to be parsed
-     * @param charset if param charset is null, then encoding in document will be used;
-     *                if both param charset and encoding in document is empty, then AbstractFastXmlParser.defaultCharset will be used
-     * @throws ParseException
-     */
-    void setInput(byte[] bytes, Charset charset) throws ParseException;
-
-    /**
      * get the whole document bytes
      *
      * @return

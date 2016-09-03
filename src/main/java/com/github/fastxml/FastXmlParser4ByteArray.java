@@ -36,6 +36,14 @@ import java.nio.charset.Charset;
  */
 public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
 
+    /**
+     * Set input bytes, and set charset if no charset specified in document.
+     *
+     * @param bytes   byte array need to be parsed
+     * @param charset if param charset is null, then encoding in document will be used;
+     *                if both param charset and encoding in document is empty, then AbstractFastXmlParser.defaultCharset will be used
+     * @throws ParseException
+     */
     public void setInput(byte[] bytes, Charset charset) throws ParseException {
         if (bytes == null || bytes.length == 0) {
             throw ParseException.emptyDocument();
@@ -133,7 +141,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                                 skipUselessChar();
                                 byte currentCursor = docBytes[cursor];
                                 if (currentCursor == '\"' || currentCursor == '\'') {
-                                    moveCursor(1);
                                     processEncodingValue(); // parse encoding="xxx"
                                     return processEndDeclaration();
                                 } else {
@@ -204,7 +211,8 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private void processEncodingValue() throws ParseException {
         // check doubleQuote or singleQuote
-        currentInDoubleQuote = docBytes[cursor - 1] == '\"';
+        currentInDoubleQuote = docBytes[cursor] == '\"';
+        moveCursor(1);
         currentIndex = cursor;
         for (; cursor < docBytesLength; moveCursor(1)) {
             byte cursorByte = docBytes[cursor];
@@ -311,7 +319,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
             } else if (nextByte == '/') { // found out end tag
                 moveCursor(2); // skip "</"
                 return END_TAG;
-            } else { // so it should be text
+            } else { // so it should be text CDATA block
                 // restore
                 cursor = tempCursor;
                 return TEXT;
@@ -335,7 +343,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private int processAfterEndTag() throws ParseException {
         skipUselessChar();
-        // continue to find out next event: end tag or another start tag
+        // continue to find out next event: end tag or another start tag or end document
         if (cursor == docBytesLength) {
             return END_DOCUMENT;
         } else if (docBytes[cursor] == '<') {
@@ -368,8 +376,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                     moveCursor(1);
                     skipUselessChar(); // skip ' ' and '\t' between '=' and attribute value
                     if (docBytes[cursor] == '\"' || docBytes[cursor] == '\'') { // found the quotation at the beginning of attribute value
-                        moveCursor(1); // move to the first byte in quotes
-                        return ATTRIBUTE_VALUE; // found attribute value
+                        return ATTRIBUTE_VALUE; //  found attribute value
                     } else {
                         throw ParseException.formatError("need '\"' or '\'' here", this);
                     }
@@ -389,7 +396,9 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private int processAttributeValue() throws ParseException {
         // check doubleQuote or singleQuote
-        currentInDoubleQuote = docBytes[cursor - 1] == '\"';
+        currentInDoubleQuote = docBytes[cursor] == '\"';
+        currentIndex++;
+        moveCursor(1);
         for (; cursor < docBytesLength; moveCursor(1)) {
             byte cursorByte = docBytes[cursor];
             if ((currentInDoubleQuote && cursorByte == '\"') || (!currentInDoubleQuote && cursorByte == '\'')) {// found another quotation, it's the end of attribute value
@@ -537,7 +546,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private void skipComment() throws ParseException {
         for (; cursor < docBytesLength; moveCursor(1)) {
-            int endIndexOfComment = cursor + 2;
             if (docBytes[cursor] == '-' && docBytes[cursor + 1] == '-' && docBytes[cursor + 2] == '>') { // comment end
                 moveCursor(2); // skip "-->"
                 return;
@@ -593,7 +601,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     }
 
     public String getString() throws ParseException {
-
         try {
             return ParseUtils.parseString(docBytes, currentIndex, currentBytesLength);
         } catch (ParseException e) {

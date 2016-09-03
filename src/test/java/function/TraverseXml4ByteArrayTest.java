@@ -41,6 +41,7 @@ public class TraverseXml4ByteArrayTest {
         traverseXml("test1.xml", printInfo);
         traverseXml("test1-gbk.xml", printInfo);
         traverseXml("test2.xml", printInfo);
+        traverseXml("test2-no-declaration.xml", printInfo);
     }
 
     private void traverseXml(String fileName, boolean printInfo) throws ParseException, IOException {

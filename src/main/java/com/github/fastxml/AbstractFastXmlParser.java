@@ -23,7 +23,7 @@ import java.nio.charset.Charset;
 public abstract class AbstractFastXmlParser implements FastXmlParser {
     /**
      * when use API: setInput(byte[] bytes), save whole xml file bytes.
-     * when use API: setInput(InputStream in), temporarily save some bytes from input stream, and this docBytes will be used as a ring byte list
+     * when use API: setInput(InputStream in), temporarily save some bytes from input stream, and this docBytes will be used as a buffer
      */
     protected byte[] docBytes;
 
