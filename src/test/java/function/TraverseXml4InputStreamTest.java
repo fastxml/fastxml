@@ -33,6 +33,7 @@ public class TraverseXml4InputStreamTest {
     @Test
     public void testTraverseXml() throws IOException, ParseException {
         boolean printInfo = false;
+        traverseXml("temp.xml", printInfo);
         traverseXml("bioinfo.xml", printInfo);
         traverseXml("book.xml", printInfo);
         traverseXml("form.xml", printInfo);
