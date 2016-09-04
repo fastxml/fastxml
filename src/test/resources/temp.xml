@@ -1,0 +1,17 @@
+
+<bix>
+
+    <package age="">
+        <id>111</id>
+        <name hasEntityReference="true">  汤姆克鲁兹-&amp;c&#244;t&#233;<![CDATA[ &amp;c&#244;t&#233;  ]]></name>
+    </package>
+    <package  sex="male">
+        <id>222</id>
+        <name hasEntityReference="false">weager</name>
+    </package>
+    <package>
+        <id>333</id>
+        <name />
+    </package>
+
+</bix><!-- this is comment2 -->
