@@ -22,7 +22,7 @@
  * Decoding characters as few as possible. Not all character need decode,
    I found that tag names and attribute names are usually ascii character which can be casted from byte directly,
    and only attribute value and text content need to be decoded most of the time.
- * Just skip commit, DECLARE, DOCTYPE, whitespace, tab etc,
+ * Just skip comment, DECLARE, DOCTYPE, whitespace, tab etc,
    they are no significant for you most of the time.
  * Convert byte array segment to Integer\Long\Short directly,
    without convert byte array segment to String and then convert to Integer\Long\Short.
