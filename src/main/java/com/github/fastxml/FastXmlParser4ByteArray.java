@@ -187,9 +187,9 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     }
 
     /**
-     * process end of declaration at the beginning of the document
+     * to find the first start tag in the document and set default charset if no encoding is set
      *
-     * @return
+     * @return <code>START_TAG</code> event
      * @throws ParseException
      */
     private int _processEndDeclaration() throws ParseException {

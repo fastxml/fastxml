@@ -15,6 +15,10 @@ import java.nio.charset.Charset;
 public class FastXmlParser4InputStream extends AbstractFastXmlParser {
 
     /**
+     * default buffer size for initialing buffer
+     */
+    public final static int DEFAULT_BUFFER_SIZE = 8192;
+    /**
      * input stream
      */
     private InputStream is;
@@ -27,10 +31,6 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      */
     private int lastReadableIndex;
     /**
-     * default buffer size for initialing buffer
-     */
-    public final static int DEFAULT_BUFFER_SIZE = 8192;
-    /**
      * current line number: starting from 1
      */
     private int row;
@@ -42,10 +42,6 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      * the index of EOF byte(-1)
      */
     private int indexOfEOF = -1;
-    /**
-     * could call resetBuffer() method, sometimes we need record the beginning index of an element
-     */
-    private boolean couldResetBuffer = true;
 
     /**
      * Set input steam, the encoding in document declaration will be used
@@ -104,9 +100,6 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
             currentEvent = nextEvent;
             currentInDoubleQuote = false;
             currentHasEntityReference = false;
-//            if (currentEvent == TEXT) {
-//                resetBuffer();
-//            }
             if (currentEvent != END_TAG_WITHOUT_TEXT) {
                 resetCurrent();
             }
@@ -352,29 +345,24 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
         int tempCursor = cursor;
         int count = skipUselessChar();
         tempCursor = cursor - count; // resetBuffer() may be called, so recaculate tempCursor
-        couldResetBuffer = false;
-        try {
-            // continue to find out next event: another start tag or end tag or text
-            if (readAndCheck(cursor, '<')) {
-                byte nextByte = (byte) read(cursor + 1);
-                if (ByteUtils.isValidTokenChar(nextByte)) { // found out another start tag
-                    moveCursor(1); // skip "<"
-                    return START_TAG;
-                } else if (nextByte == '/') { // found out end tag
-                    moveCursor(2); // skip "</"
-                    return END_TAG;
-                } else { // so it should be text CDATA block
-                    // restore
-                    cursor = tempCursor;
-                    return TEXT;
-                }
-            } else {
+        // continue to find out next event: another start tag or end tag or text
+        if (readAndCheck(cursor, '<')) {
+            byte nextByte = (byte) read(cursor + 1);
+            if (ByteUtils.isValidTokenChar(nextByte)) { // found out another start tag
+                moveCursor(1); // skip "<"
+                return START_TAG;
+            } else if (nextByte == '/') { // found out end tag
+                moveCursor(2); // skip "</"
+                return END_TAG;
+            } else { // so it should be text CDATA block
                 // restore
                 cursor = tempCursor;
                 return TEXT;
             }
-        }finally {
-            couldResetBuffer = true;
+        } else {
+            // restore
+            cursor = tempCursor;
+            return TEXT;
         }
     }
 
@@ -518,22 +506,17 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      */
     private int skipUselessChar() throws ParseException {
         int beginIndex = cursor;
-        couldResetBuffer = false;
-        try {
-            for (; notEnd(); moveCursor()) {
-                byte cursorByte = docBytes[cursor];
-                if (ByteUtils.isWhiteSpaceOrNewLine(cursorByte)) { // found useless character: ' ','\t','\r','\n'
-                    // continue
-                } else if (cursorByte == '<' && readAndCheck(cursor + 1, '!')) {
-                    skipOtherUselessChar();
-                } else { // found valid char
-                    break;
-                }
+        for (; notEnd(); moveCursor()) {
+            byte cursorByte = docBytes[cursor];
+            if (ByteUtils.isWhiteSpaceOrNewLine(cursorByte)) { // found useless character: ' ','\t','\r','\n'
+                // continue
+            } else if (cursorByte == '<' && readAndCheck(cursor + 1, '!')) {
+                skipOtherUselessChar();
+            } else { // found valid char
+                break;
             }
-            return cursor - beginIndex;
-        }finally {
-            couldResetBuffer = true;
         }
+        return cursor - beginIndex;
     }
 
     /**
@@ -687,20 +670,23 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
     }
 
     /**
-     * read a byte from IO, and grow buffer if buffer is full
+     * read a byte from IO, and adjust buffer if buffer is full
      *
      * @return the byte from IO
      * @throws ParseException
      */
     private int read() throws ParseException {
-        if(indexOfEOF > 0){
+        if (indexOfEOF > 0) {
             return -1;
         }
         try {
-            if (lastReadableIndex == this.bufferEnd) { // buffer is full, so need to grow buffer
-                if(lastReadableIndex - currentIndex + 1 > currentIndex || !couldResetBuffer) {
+            // buffer is full, so need to adjust buffer to fill any more bytes
+            if (lastReadableIndex == this.bufferEnd) {
+                if (lastReadableIndex - currentIndex + 1 > currentIndex) {
+                    // current token is longer than half of the buffer, then need to grow buffer
                     growBuffer();
-                }else{
+                } else {
+                    // current token is not longer than half of the buffer, then reset buffer may be better
                     resetBuffer();
                 }
             }
@@ -708,7 +694,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
             int count = is.read(docBytes, lastReadableIndex + 1, leftLength);
             int b = docBytes[lastReadableIndex + 1];
             lastReadableIndex = lastReadableIndex + count;
-            if(count < leftLength){
+            if (count < leftLength) {
                 indexOfEOF = lastReadableIndex + 1;
             }
             return b;
@@ -749,29 +735,13 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
     private void resetBuffer() {
         System.arraycopy(docBytes, currentIndex, docBytes, 0, lastReadableIndex - currentIndex + 1);
         this.lastReadableIndex = lastReadableIndex - currentIndex;
-        if(indexOfEOF > 0){
+        if (indexOfEOF > 0) {
             indexOfEOF = this.lastReadableIndex + 1;
         }
         this.cursor = this.cursor - currentIndex;
         this.currentIndex = 0;
-//        this.currentBytesLength = 0;
-
+        //System.out.println("resetBuffer: " + docBytes.length);
     }
-
-//    /**
-//     * reset buffer for reusing
-//     */
-//    private void resetBuffer() {
-//        System.arraycopy(docBytes, cursor, docBytes, 0, lastReadableIndex - cursor + 1);
-//        this.lastReadableIndex = lastReadableIndex - cursor;
-//        if(indexOfEOF > 0){
-//            indexOfEOF = this.lastReadableIndex + 1;
-//        }
-//        this.cursor = 0;
-//        this.currentIndex = 0;
-//        this.currentBytesLength = 0;
-//
-//    }
 
     /**
      * grow buffer, when find an element longer than current buffer
@@ -783,7 +753,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
         System.arraycopy(oldBuffer, 0, this.docBytes, 0, bufferLength);
         bufferLength = this.docBytes.length;
         this.bufferEnd = bufferLength - 1;
-        System.out.println("growBuffer: " + docBytes.length);
+        //System.out.println("growBuffer: " + docBytes.length);
     }
 
     public boolean isMatch(byte[] expectBytes) {
