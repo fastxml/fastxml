@@ -119,13 +119,13 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                     && (docBytes[cursor + 2] == 'x' || docBytes[cursor + 2] == 'X')
                     && (docBytes[cursor + 3] == 'm' || docBytes[cursor + 3] == 'M')
                     && (docBytes[cursor + 4] == 'l' || docBytes[cursor + 4] == 'L')) {
-                moveCursor(5);
+                cursor += 5;
                 skipUselessChar();
 
                 if (charset != null) {// if charset has been set, then just finish declaration.
                     return processEndDeclaration();
                 } else { // charset has not been set, then find out encoding
-                    for (; cursor < docBytesLength; moveCursor(1)) {
+                    for (; cursor < docBytesLength; cursor++) {
                         if ((docBytes[cursor] == 'e' || docBytes[cursor] == 'E')
                                 && (docBytes[cursor + 1] == 'n' || docBytes[cursor + 1] == 'N')
                                 && (docBytes[cursor + 2] == 'c' || docBytes[cursor + 2] == 'C')
@@ -134,10 +134,10 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                                 && (docBytes[cursor + 5] == 'i' || docBytes[cursor + 5] == 'I')
                                 && (docBytes[cursor + 6] == 'n' || docBytes[cursor + 6] == 'N')
                                 && (docBytes[cursor + 7] == 'g' || docBytes[cursor + 7] == 'G')) {
-                            moveCursor(8); // skip "encoding"
+                            cursor += 8; // skip "encoding"
                             skipUselessChar();
                             if (docBytes[cursor] == '=') {
-                                moveCursor(1);
+                                cursor++;
                                 skipUselessChar();
                                 byte currentCursor = docBytes[cursor];
                                 if (currentCursor == '\"' || currentCursor == '\'') {
@@ -150,7 +150,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                                 throw ParseException.formatError("need '=' here", this);
                             }
                         } else if (docBytes[cursor] == '?' && docBytes[cursor + 1] == '>') {
-                            moveCursor(2);
+                            cursor += 2;
                             skipUselessChar();
                             return _processEndDeclaration();
                         }
@@ -158,7 +158,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                     throw ParseException.formatError("xml declaration should contain encoding, or specify charset on method setInput(byte[], Charset)", this);
                 }
             } else { // no declaration, no specified charset, so use the default charset, next event should be START_TAG
-                moveCursor(1);
+                cursor++;
                 if (charset == null) {
                     charset = DEFAULT_CHARSET;
                 }
@@ -176,9 +176,9 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @throws ParseException
      */
     private int processEndDeclaration() throws ParseException {
-        for (; cursor < docBytesLength; moveCursor(1)) {
+        for (; cursor < docBytesLength; cursor++) {
             if (docBytes[cursor] == '?' && docBytes[cursor + 1] == '>') {
-                moveCursor(2);
+                cursor += 2;
                 skipUselessChar();
                 return _processEndDeclaration();
             }
@@ -197,7 +197,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
             charset = DEFAULT_CHARSET;
         }
         if (docBytes[cursor] == '<') {
-            moveCursor(1);
+            cursor++;
             return START_TAG;
         } else {
             throw ParseException.formatError("should be a <tagName here", this);
@@ -212,9 +212,9 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     private void processEncodingValue() throws ParseException {
         // check doubleQuote or singleQuote
         currentInDoubleQuote = docBytes[cursor] == '\"';
-        moveCursor(1);
+        cursor++;
         currentIndex = cursor;
-        for (; cursor < docBytesLength; moveCursor(1)) {
+        for (; cursor < docBytesLength; cursor++) {
             byte cursorByte = docBytes[cursor];
             if ((currentInDoubleQuote && cursorByte == '\"') || (!currentInDoubleQuote && cursorByte == '\'')) {// found another quotation, it's the end of attribute value
                 currentBytesLength = cursor - currentIndex; // length of attribute value
@@ -223,7 +223,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                 } catch (Exception e) {
                     throw ParseException.formatError("encoding is not found or charset is not correct", this);
                 }
-                moveCursor(1); // skip another '\'' or '\"'
+                cursor++; // skip another '\'' or '\"'
                 return;
             }
         }
@@ -239,18 +239,18 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     private int processStartTag() throws ParseException {
         // the first char has bean validated in previous event, so just skip it.
         // to see: processAfterEndTag() and processStartDocument()
-        for (; cursor < docBytesLength; moveCursor(1)) {
+        for (; cursor < docBytesLength; cursor++) {
             if (!ByteUtils.isValidTokenChar(docBytes[cursor])) {
                 if (docBytes[cursor] == '>') { // start tag
                     currentBytesLength = cursor - currentIndex;
-                    moveCursor(1);
+                    cursor++;
                     return processAfterStartTag();
                 } else {
                     int skipCharCount = skipUselessChar();
                     // tagName should not contain whitespace
                     currentBytesLength = cursor - skipCharCount - currentIndex;
                     if (docBytes[cursor] == '/') { // tag end immediately
-                        moveCursor(1);
+                        cursor++;
                         return END_TAG_WITHOUT_TEXT;
                     } else if (skipCharCount > 0) { // found attribute name
                         return ATTRIBUTE_NAME;
@@ -270,10 +270,10 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @throws ParseException
      */
     private int processEndTag() throws ParseException {
-        for (; cursor < docBytesLength; moveCursor(1)) {
+        for (; cursor < docBytesLength; cursor++) {
             if (docBytes[cursor] == '>') {// the tag end
                 currentBytesLength = cursor - currentIndex;
-                moveCursor(1);
+                cursor++;
                 return processAfterEndTag();
             } else if (!ByteUtils.isValidTokenChar(docBytes[cursor])) {
                 throw ParseException.formatError("tag name should not contain invalid char", this);
@@ -290,7 +290,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private int processEndTagWithoutText() throws ParseException {
         if (docBytes[cursor] == '>') {
-            moveCursor(1);
+            cursor++;
             return processAfterEndTag();
         } else {
             throw ParseException.tagNotClosed(this);
@@ -314,10 +314,10 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
         if (docBytes[cursor] == '<') {
             byte nextByte = docBytes[cursor + 1];
             if (ByteUtils.isValidTokenChar(nextByte)) { // found out another start tag
-                moveCursor(1); // skip "<"
+                cursor++; // skip "<"
                 return START_TAG;
             } else if (nextByte == '/') { // found out end tag
-                moveCursor(2); // skip "</"
+                cursor += 2; // skip "</"
                 return END_TAG;
             } else { // so it should be text CDATA block
                 // restore
@@ -348,10 +348,10 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
             return END_DOCUMENT;
         } else if (docBytes[cursor] == '<') {
             if (docBytes[cursor + 1] == '/') { // found another end tag
-                moveCursor(2); // skip "</"
+                cursor += 2; // skip "</"
                 return END_TAG;
             } else { // found a start tag
-                moveCursor(1);
+                cursor++;
                 return START_TAG;
             }
         } else {
@@ -366,14 +366,14 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @throws ParseException
      */
     private int processAttributeName() throws ParseException {
-        moveCursor(1); // the first char has been checked in previous event, so here just skip it
-        for (; cursor < docBytesLength; moveCursor(1)) {// read tag bytes
+        cursor++; // the first char has been checked in previous event, so here just skip it
+        for (; cursor < docBytesLength; cursor++) {// read tag bytes
             if (!ByteUtils.isValidTokenChar(docBytes[cursor])) {// this attribute name end
                 currentBytesLength = cursor - currentIndex;
                 skipUselessChar(); // skip ' ' and '\t' between attribute name and '='
                 // read "=\"", '\'' should be ok
                 if (docBytes[cursor] == '=') {
-                    moveCursor(1);
+                    cursor++;
                     skipUselessChar(); // skip ' ' and '\t' between '=' and attribute value
                     if (docBytes[cursor] == '\"' || docBytes[cursor] == '\'') { // found the quotation at the beginning of attribute value
                         return ATTRIBUTE_VALUE; //  found attribute value
@@ -398,22 +398,22 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
         // check doubleQuote or singleQuote
         currentInDoubleQuote = docBytes[cursor] == '\"';
         currentIndex++;
-        moveCursor(1);
-        for (; cursor < docBytesLength; moveCursor(1)) {
+        cursor++;
+        for (; cursor < docBytesLength; cursor++) {
             byte cursorByte = docBytes[cursor];
             if ((currentInDoubleQuote && cursorByte == '\"') || (!currentInDoubleQuote && cursorByte == '\'')) {// found another quotation, it's the end of attribute value
                 currentBytesLength = cursor - currentIndex; // length of attribute value
-                moveCursor(1);
+                cursor++;
                 // continue to read byte until find next event
                 skipUselessChar();
                 cursorByte = docBytes[cursor];
                 if (ByteUtils.isValidTokenChar(cursorByte)) {// next attributeName
                     return ATTRIBUTE_NAME;
                 } else if (cursorByte == '>') { // the start tag
-                    moveCursor(1);
+                    cursor++;
                     return processAfterStartTag();
                 } else if (cursorByte == '/') {// found end tag
-                    moveCursor(1);
+                    cursor++;
                     return END_TAG_WITHOUT_TEXT;
                 } else {
                     throw ParseException.formatError("should be space or '>' or '/>' or another attribute here", this);
@@ -435,11 +435,11 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private int processText() throws ParseException {
         boolean inCDATA = false;
-        for (; cursor < docBytesLength; moveCursor(1)) {
+        for (; cursor < docBytesLength; cursor++) {
             byte currentCursor = docBytes[cursor];
             if (inCDATA) { // in CDATA block, then find out "]]>"
                 if (currentCursor == ']' && docBytes[cursor + 1] == ']' && docBytes[cursor + 2] == '>') {
-                    moveCursor(2);
+                    cursor += 2;
                     inCDATA = false;
                 }
             } else { // not in CDATA block
@@ -448,11 +448,11 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
                     if (nextByte == '!' && docBytes[cursor + 2] == '[' && docBytes[cursor + 3] == 'C'
                             && docBytes[cursor + 4] == 'D' && docBytes[cursor + 5] == 'A' && docBytes[cursor + 6] == 'T'
                             && docBytes[cursor + 7] == 'A' && docBytes[cursor + 8] == '[') { // found CDATA block
-                        moveCursor(8);
+                        cursor += 8;
                         inCDATA = true;
                     } else if (nextByte == '/') { // found end tag
                         currentBytesLength = cursor - currentIndex;
-                        moveCursor(2); // skip "</"
+                        cursor += 2; // skip "</"
                         return END_TAG;
                     }
                 } else if (currentCursor == '&') { // text content contains entity reference
@@ -471,7 +471,7 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private int skipUselessChar() throws ParseException {
         int beginIndex = cursor;
-        for (; cursor < docBytesLength; moveCursor(1)) {
+        for (; cursor < docBytesLength; cursor++) {
             byte cursorByte = docBytes[cursor];
             if (ByteUtils.isWhiteSpaceOrNewLine(cursorByte)) { // found useless character: ' ','\t','\r','\n'
                 // continue
@@ -491,13 +491,13 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private void skipOtherUselessChar() throws ParseException {
         if (docBytes[cursor + 2] == '-' && docBytes[cursor + 3] == '-') { // found comment
-            moveCursor(4); // skip "<!--"
+            cursor += 4; // skip "<!--"
             skipComment();
             // continue
         } else if (docBytes[cursor + 2] == 'D' && docBytes[cursor + 3] == 'O' && docBytes[cursor + 4] == 'C'
                 && docBytes[cursor + 5] == 'T' && docBytes[cursor + 6] == 'Y' && docBytes[cursor + 7] == 'P'
                 && docBytes[cursor + 8] == 'E') { // found DTD DOCTYPE
-            moveCursor(8); // skip "<!DOCTYPE"
+            cursor += 8; // skip "<!DOCTYPE"
             skipDocType();
             // continue
         }
@@ -520,12 +520,12 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      */
     private void skipDocType() throws ParseException {
         boolean docTypeDefineInDoc = false;
-        for (; cursor < docBytesLength; moveCursor(1)) {
+        for (; cursor < docBytesLength; cursor++) {
             if (!docTypeDefineInDoc && docBytes[cursor] == '[') { // DTD DOCTYPE defined in document
                 docTypeDefineInDoc = true;
             } else if (docTypeDefineInDoc) {
                 boolean foundEndBracket = false;
-                for (; cursor < docBytesLength; moveCursor(1)) {
+                for (; cursor < docBytesLength; cursor++) {
                     if (!foundEndBracket && docBytes[cursor] == ']') {
                         foundEndBracket = true;
                     } else if (foundEndBracket && docBytes[cursor] == '>') { // doctype end
@@ -545,9 +545,9 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
      * @throws ParseException
      */
     private void skipComment() throws ParseException {
-        for (; cursor < docBytesLength; moveCursor(1)) {
+        for (; cursor < docBytesLength; cursor++) {
             if (docBytes[cursor] == '-' && docBytes[cursor + 1] == '-' && docBytes[cursor + 2] == '>') { // comment end
-                moveCursor(2); // skip "-->"
+                cursor += 2; // skip "-->"
                 return;
             }
         }
@@ -575,10 +575,6 @@ public class FastXmlParser4ByteArray extends AbstractFastXmlParser {
     private void resetCurrent() {
         currentIndex = cursor;
         currentBytesLength = 0;
-    }
-
-    private void moveCursor(int count) {
-        cursor += count;
     }
 
     public boolean isMatch(byte[] expectBytes) {
