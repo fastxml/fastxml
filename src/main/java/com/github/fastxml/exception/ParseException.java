@@ -56,7 +56,6 @@ public class ParseException extends Exception {
         }
         if (parser instanceof FastXmlParser4ByteArray) {
             byte[] docBytes = parser.getDocument();
-            int length = docBytes.length;
             row = 1;
             int cursor = parser.getCursor();
             int lastNewLine = 1;
@@ -67,7 +66,7 @@ public class ParseException extends Exception {
                 }
             }
             column = cursor - lastNewLine;
-        } else {
+        } else if(parser instanceof FastXmlParser4InputStream){
             FastXmlParser4InputStream parser4InputStream = (FastXmlParser4InputStream) parser;
             row = parser4InputStream.getRow();
             column = parser4InputStream.getColumn();

@@ -92,6 +92,8 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
         this.cursor = 0;
         this.lastReadableIndex = -1;
         this.indexOfEOF = -1;
+        this.row = 1;
+        this.column = 1;
         read(); // prefetch a byte for parser
     }
 
@@ -159,7 +161,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
                 if (charset != null) {// if charset has been set, then just finish declaration.
                     return processEndDeclaration();
                 } else { // charset has not been set, then find out encoding
-                    for (; notEnd(); moveCursor()) {
+                    for (; cursor != indexOfEOF; moveCursor(1)) {
                         if (readAndCheck(cursor, 'e', 'E')
                                 && readAndCheck(cursor + 1, 'n', 'N')
                                 && readAndCheck(cursor + 2, 'c', 'C')
@@ -210,7 +212,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      * @throws ParseException
      */
     private int processEndDeclaration() throws ParseException {
-        for (; notEnd(); moveCursor()) {
+        for (; cursor != indexOfEOF; moveCursor(1)) {
             if (readAndCheck(cursor, '?') && readAndCheck(cursor + 1, '>')) {
                 moveCursor(2);
                 skipUselessChar();
@@ -248,7 +250,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
         currentInDoubleQuote = docBytes[cursor] == '\"';
         moveCursor(1);
         currentIndex = cursor;
-        for (; notEnd(); moveCursor()) {
+        for (; cursor != indexOfEOF; moveCursor(1)) {
             byte cursorByte = docBytes[cursor];
             if ((currentInDoubleQuote && cursorByte == '\"') || (!currentInDoubleQuote && cursorByte == '\'')) {// found another quotation, it's the end of attribute value
                 currentBytesLength = cursor - currentIndex; // length of attribute value
@@ -273,7 +275,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
     private int processStartTag() throws ParseException {
         // the first char has bean validated in previous event, so just skip it.
         // to see: processAfterEndTag() and processStartDocument()
-        for (; notEnd(); moveCursor()) {
+        for (; cursor != indexOfEOF; moveCursor(1)) {
             if (!ByteUtils.isValidTokenChar(docBytes[cursor])) {
                 if (readAndCheck(cursor, '>')) { // start tag
                     currentBytesLength = cursor - currentIndex;
@@ -304,7 +306,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      * @throws ParseException
      */
     private int processEndTag() throws ParseException {
-        for (; notEnd(); moveCursor()) {
+        for (; cursor != indexOfEOF; moveCursor(1)) {
             if (readAndCheck(cursor, '>')) {// the tag end
                 currentBytesLength = cursor - currentIndex;
                 moveCursor(1);
@@ -379,7 +381,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
     private int processAfterEndTag() throws ParseException {
         skipUselessChar();
         // continue to find out next event: end tag or another start tag or end document
-        if (!notEnd()) {
+        if (cursor == indexOfEOF) {
             return END_DOCUMENT;
         } else if (readAndCheck(cursor, '<')) {
             if (readAndCheck(cursor + 1, '/')) { // found another end tag
@@ -402,7 +404,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      */
     private int processAttributeName() throws ParseException {
         moveCursor(1); // the first char has been checked in previous event, so here just skip it
-        for (; notEnd(); moveCursor()) {// read tag bytes
+        for (; cursor != indexOfEOF; moveCursor(1)) {// read tag bytes
             if (!ByteUtils.isValidTokenChar(docBytes[cursor])) {// this attribute name end
                 currentBytesLength = cursor - currentIndex;
                 skipUselessChar(); // skip ' ' and '\t' between attribute name and '='
@@ -434,7 +436,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
         currentInDoubleQuote = docBytes[cursor] == '\"';
         currentIndex++;
         moveCursor(1);
-        for (; notEnd(); moveCursor()) {
+        for (; cursor != indexOfEOF; moveCursor(1)) {
             byte cursorByte = docBytes[cursor];
             if ((currentInDoubleQuote && cursorByte == '\"') || (!currentInDoubleQuote && cursorByte == '\'')) {// found another quotation, it's the end of attribute value
                 currentBytesLength = cursor - currentIndex; // length of attribute value
@@ -470,7 +472,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      */
     private int processText() throws ParseException {
         boolean inCDATA = false;
-        for (; notEnd(); moveCursor()) {
+        for (; cursor != indexOfEOF; moveCursor(1)) {
             byte currentCursor = docBytes[cursor];
             if (inCDATA) { // in CDATA block, then find out "]]>"
                 if (currentCursor == ']' && readAndCheck(cursor + 1, ']') && readAndCheck(cursor + 2, '>')) {
@@ -506,7 +508,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      */
     private int skipUselessChar() throws ParseException {
         int beginIndex = cursor;
-        for (; notEnd(); moveCursor()) {
+        for (; cursor != indexOfEOF; moveCursor(1)) {
             byte cursorByte = docBytes[cursor];
             if (ByteUtils.isWhiteSpaceOrNewLine(cursorByte)) { // found useless character: ' ','\t','\r','\n'
                 // continue
@@ -520,7 +522,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
     }
 
     /**
-     * skip comment and DTA DOCTYPE
+     * skip comment and DTD DOCTYPE
      *
      * @throws ParseException
      */
@@ -555,12 +557,12 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      */
     private void skipDocType() throws ParseException {
         boolean docTypeDefineInDoc = false;
-        for (; notEnd(); moveCursor()) {
+        for (; cursor != indexOfEOF; moveCursor(1)) {
             if (!docTypeDefineInDoc && readAndCheck(cursor, '[')) { // DTD DOCTYPE defined in document
                 docTypeDefineInDoc = true;
             } else if (docTypeDefineInDoc) {
                 boolean foundEndBracket = false;
-                for (; notEnd(); moveCursor()) {
+                for (; cursor != indexOfEOF; moveCursor(1)) {
                     if (!foundEndBracket && readAndCheck(cursor, ']')) {
                         foundEndBracket = true;
                     } else if (foundEndBracket && readAndCheck(cursor, '>')) { // doctype end
@@ -580,7 +582,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
      * @throws ParseException
      */
     private void skipComment() throws ParseException {
-        for (; notEnd(); moveCursor()) {
+        for (; cursor != indexOfEOF; moveCursor(1)) {
             if (readAndCheck(cursor, '-') && readAndCheck(cursor + 1, '-') && readAndCheck(cursor + 2, '>')) { // comment end
                 moveCursor(2); // skip "-->"
                 return;
@@ -612,19 +614,17 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
         currentBytesLength = 0;
     }
 
-    private int moveCursor() throws ParseException {
-        int b = moveCursor(1);
-        setRowAndColumn(b);
-        return b;
-    }
-
+    /**
+     * move cursor
+     * @param count step count
+     * @return the byte pointed by cursor after moving
+     * @throws ParseException
+     */
     private int moveCursor(int count) throws ParseException {
         cursor += count;
-        return read(cursor);
-    }
-
-    private boolean notEnd() {
-        return cursor != indexOfEOF;
+        int b = read(cursor);
+        setRowAndColumn(b, count);
+        return b;
     }
 
     /**
@@ -662,11 +662,7 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
     private int read(int index) throws ParseException {
         // for multiple branch checking, if checking failed in the first branch which has read a byte from IO,
         // then second branch checking has no need to read byte from IO, just check it in buffer
-        if (index > lastReadableIndex) {
-            return read();
-        } else {
-            return docBytes[index];
-        }
+        return index > lastReadableIndex ? read() : docBytes[index];
     }
 
     /**
@@ -703,12 +699,13 @@ public class FastXmlParser4InputStream extends AbstractFastXmlParser {
         }
     }
 
-    private void setRowAndColumn(int bytes) {
+    private void setRowAndColumn(int bytes, int count) {
         if (bytes == '\n') {
             this.row++;
-            this.column = -1;
+            this.column = 0;
+        }else{
+            this.column += count;
         }
-        this.column++;
     }
 
     /**
