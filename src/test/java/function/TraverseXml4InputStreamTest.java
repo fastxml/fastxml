@@ -18,6 +18,7 @@ package function;
 import com.github.fastxml.FastXmlFactory;
 import com.github.fastxml.FastXmlParser;
 import com.github.fastxml.exception.ParseException;
+import org.junit.Assert;
 import org.junit.Test;
 import util.FileLoaderUtils;
 
@@ -44,6 +45,18 @@ public class TraverseXml4InputStreamTest {
         traverseXml("test1-gbk.xml", printInfo);
         traverseXml("test2.xml", printInfo);
         traverseXml("test2-no-declaration.xml", printInfo);
+        try {
+            traverseXml("error.xml", printInfo);
+        }catch (Exception e){
+            Assert.assertTrue(e instanceof ParseException);
+            ParseException parseException = (ParseException)e;
+            System.out.println(parseException.getRow());
+            System.out.println(parseException.getColumn());
+            Assert.assertEquals(parseException.getRow(), 40);
+            Assert.assertEquals(parseException.getColumn(), 0);
+
+
+        }
     }
 
     private void traverseXml(String fileName, boolean printInfo) throws ParseException, IOException {
